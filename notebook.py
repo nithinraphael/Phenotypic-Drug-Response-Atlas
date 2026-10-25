@@ -4,6 +4,7 @@
 #     "expression",
 #     "marimo",
 #     "numpy",
+#     "piecewise-regression",
 #     "plotly",
 #     "polars",
 #     "scipy",
@@ -27,6 +28,7 @@ def _():
     from expression import Error, Ok, Result
     import marimo as mo
     import numpy as np
+    import piecewise_regression as pr
     import plotly.graph_objects as go
     import polars as pl
     import scipy.stats as stats
@@ -49,6 +51,7 @@ def _():
         np,
         os,
         pl,
+        pr,
         stats,
         tifffile,
         torch,
@@ -867,6 +870,323 @@ def _(
 
     ai_output
     return (ai_output,)
+
+
+@app.cell
+def _(mo):
+    ti_select = mo.ui.dropdown(
+        options=[
+            "All Candidate Intervals",
+            "Piecewise Breakpoint CI",
+            "Hill Dynamic Window (EC20–EC80)",
+            "AI Gradient Maximum Window",
+        ],
+        value="All Candidate Intervals",
+        label="Highlight Transition",
+    )
+    return (ti_select,)
+
+
+@app.cell
+def _(
+    Error,
+    Ok,
+    Result,
+    go,
+    mo,
+    np,
+    pl,
+    pr,
+    prism_cell_select,
+    prism_data_result,
+    prism_drug_select,
+    ti_select,
+):
+    if prism_data_result.is_error():
+        tp_view = mo.md(f"⚠️ **Cannot run Tipping-Point Detection:** {prism_data_result.error}")
+    else:
+        tp_meas, tp_curves = prism_data_result.ok
+        doses_arr = tp_meas["dose"].to_numpy()
+        viabs_arr = tp_meas["viability"].to_numpy()
+
+        if tp_meas.height == 0:
+            tp_view = mo.md("⚠️ No measurements available for tipping-point detection.")
+        elif len(np.unique(doses_arr)) < 3:
+            tp_view = mo.md("⚠️ Insufficient concentration points (< 3) to analyze response transitions.")
+        else:
+            # 1. Experimental Gradients (Actual measured responses)
+            unique_d = np.unique(doses_arr)
+            mean_v = np.array([np.mean(viabs_arr[doses_arr == d]) for d in unique_d])
+            log_d = np.log10(unique_d)
+            exp_grad = np.gradient(mean_v, log_d)
+            exp_steep_idx = int(np.argmin(exp_grad))
+            exp_steep_dose = float(unique_d[exp_steep_idx])
+            exp_steep_slope = float(exp_grad[exp_steep_idx])
+            exp_mag = float(np.ptp(mean_v))
+
+            # 2. Piecewise Segmented Regression (Breakpoint estimation)
+            if len(unique_d) >= 4 and len(doses_arr) >= 6:
+                pw = pr.Fit(np.log10(doses_arr), viabs_arr, n_breakpoints=1, n_boot=20, verbose=False)
+                pw_res = pw.get_results()
+                if pw_res.get("converged"):
+                    bp1 = pw_res["estimates"]["breakpoint1"]
+                    bp_dose = float(10 ** bp1["estimate"])
+                    bp_ci_raw = bp1["confidence_interval"]
+                    bp_ci = (float(10 ** bp_ci_raw[0]), float(10 ** bp_ci_raw[1]))
+                    bp_se = float(bp1["se"])
+                    davies_p = pw_res.get("davies")
+
+                    pw_flags = []
+                    if len(unique_d) <= 6:
+                        pw_flags.append("Sparse concentrations (≤6 doses)")
+                    if (bp_ci_raw[1] - bp_ci_raw[0]) > np.ptp(log_d):
+                        pw_flags.append("Wide CI")
+                    if davies_p is not None and not np.isnan(davies_p) and davies_p > 0.05:
+                        pw_flags.append(f"No sig. slope change (p={davies_p:.2f})")
+
+                    pw_res_data = Ok(
+                        {
+                            "dose": bp_dose,
+                            "ci": bp_ci,
+                            "se": bp_se,
+                            "slope_change": float(pw_res["estimates"]["beta1"]["estimate"]),
+                            "flags": ", ".join(pw_flags) if pw_flags else "Converged (Reliable)",
+                        }
+                    )
+                else:
+                    pw_res_data = Error("Piecewise fit failed to converge.")
+            else:
+                pw_res_data = Error("Insufficient measurements (<4 unique or <6 total doses).")
+
+            # 3. Smooth Hill Curve Inflection & Dynamic Transition Window
+            valid_curves = tp_curves.filter(
+                (pl.col("ec50").is_not_null())
+                & (pl.col("ec50") > 0)
+                & (pl.col("slope").is_not_null())
+                & (pl.col("slope") > 0)
+                & (pl.col("r2").is_not_null())
+                & (pl.col("r2") > 0)
+            )
+            hill_info = None
+            if valid_curves.height > 0:
+                h_row = valid_curves.to_dicts()[0]
+                h_ec50 = float(h_row["ec50"])
+                h_slope = float(h_row["slope"])
+                h_upper = float(h_row["upper_limit"])
+                h_lower = float(h_row["lower_limit"])
+                h_window = (
+                    float(h_ec50 * (0.25 ** (1.0 / h_slope))),
+                    float(h_ec50 * (4.0 ** (1.0 / h_slope))),
+                )
+                h_max_grad = float(-0.5756 * h_slope * (h_upper - h_lower))
+                hill_info = {
+                    "dose": h_ec50,
+                    "window": h_window,
+                    "slope": h_max_grad,
+                    "screen": h_row["screen_id"],
+                    "mag": float(h_upper - h_lower),
+                }
+
+            # Model Disagreement Check
+            if pw_res_data.is_ok() and hill_info is not None:
+                pw_d = pw_res_data.ok["dose"]
+                ratio = max(pw_d, hill_info["dose"]) / min(pw_d, hill_info["dose"])
+                if ratio > 3.0:
+                    current_flags = pw_res_data.ok["flags"]
+                    pw_res_data.ok["flags"] = (
+                        current_flags + "; Diverges from Hill EC50 (>3x)"
+                        if current_flags != "Converged (Reliable)"
+                        else "Diverges from Hill EC50 (>3x)"
+                    )
+
+            # 4. Pretrained AI Gradient Analysis (on intermediate 100 concentrations)
+            tp_min_d, tp_max_d = min(doses_arr), max(doses_arr)
+            tp_grid_d = np.logspace(np.log10(tp_min_d * 0.8), np.log10(tp_max_d * 1.2), 100)
+            if hill_info is not None:
+                h_grid_y = h_lower + (h_upper - h_lower) / (1.0 + (tp_grid_d / h_ec50) ** h_slope)
+            else:
+                h_grid_y = np.interp(tp_grid_d, unique_d, mean_v)
+            ai_grad = np.gradient(h_grid_y, np.log10(tp_grid_d))
+            ai_idx = int(np.argmin(ai_grad))
+            ai_steep_dose = float(tp_grid_d[ai_idx])
+            ai_steep_slope = float(ai_grad[ai_idx])
+            ai_mask = ai_grad <= (0.75 * np.min(ai_grad))
+            ai_win_d = tp_grid_d[ai_mask]
+            ai_window = (float(min(ai_win_d)), float(max(ai_win_d)))
+
+            # 5. Build Transition Comparison Table
+            tp_rows = [
+                {
+                    "approach": "Experimental Gradient",
+                    "type": "Direct Measurements",
+                    "transition_dose_uM": exp_steep_dose,
+                    "steepness_slope": exp_steep_slope,
+                    "effect_magnitude": exp_mag,
+                    "uncertainty_range_uM": "N/A (Point Estimate)",
+                    "reliability_status": "Empirical (Measured points)",
+                }
+            ]
+
+            if pw_res_data.is_ok():
+                pw_d = pw_res_data.ok
+                tp_rows.append(
+                    {
+                        "approach": "Piecewise Breakpoint",
+                        "type": "Segmented Linear OLS",
+                        "transition_dose_uM": pw_d["dose"],
+                        "steepness_slope": pw_d["slope_change"],
+                        "effect_magnitude": exp_mag,
+                        "uncertainty_range_uM": f"[{pw_d['ci'][0]:.3g}, {pw_d['ci'][1]:.3g}]",
+                        "reliability_status": pw_d["flags"],
+                    }
+                )
+            else:
+                tp_rows.append(
+                    {
+                        "approach": "Piecewise Breakpoint",
+                        "type": "Segmented Linear OLS",
+                        "transition_dose_uM": None,
+                        "steepness_slope": None,
+                        "effect_magnitude": None,
+                        "uncertainty_range_uM": "N/A",
+                        "reliability_status": f"Rejected: {pw_res_data.error}",
+                    }
+                )
+
+            if hill_info is not None:
+                tp_rows.append(
+                    {
+                        "approach": "Smooth Hill Inflection",
+                        "type": "Continuous 4PL Sigmoid",
+                        "transition_dose_uM": hill_info["dose"],
+                        "steepness_slope": hill_info["slope"],
+                        "effect_magnitude": hill_info["mag"],
+                        "uncertainty_range_uM": f"[{hill_info['window'][0]:.3g}, {hill_info['window'][1]:.3g}]",
+                        "reliability_status": f"Parametric Fit ({hill_info['screen']})",
+                    }
+                )
+
+            tp_rows.append(
+                {
+                    "approach": "AI Prediction Gradient",
+                    "type": "Synthetic Interpolation",
+                    "transition_dose_uM": ai_steep_dose,
+                    "steepness_slope": ai_steep_slope,
+                    "effect_magnitude": float(np.ptp(h_grid_y)),
+                    "uncertainty_range_uM": f"[{ai_window[0]:.3g}, {ai_window[1]:.3g}]",
+                    "reliability_status": "Synthetic Model Output (Not Biological Evidence)",
+                }
+            )
+
+            tp_table = pl.DataFrame(tp_rows)
+
+            # 6. Interactive Plotly Visualization with Highlighted Transition Intervals
+            fig_tp = go.Figure()
+
+            # Scatter: Measurements
+            fig_tp.add_trace(
+                go.Scatter(
+                    x=doses_arr,
+                    y=viabs_arr,
+                    mode="markers",
+                    name="Measured Replicates",
+                    marker=dict(color="steelblue", size=7, opacity=0.8),
+                )
+            )
+
+            # Smooth Curve
+            if hill_info is not None:
+                fig_tp.add_trace(
+                    go.Scatter(
+                        x=tp_grid_d,
+                        y=h_grid_y,
+                        mode="lines",
+                        name=f"Smooth Hill Fit ({hill_info['screen']})",
+                        line=dict(color="orange", width=2),
+                    )
+                )
+
+            # Experimental steepest concentration vertical line
+            fig_tp.add_vline(
+                x=exp_steep_dose,
+                line_width=1.5,
+                line_dash="dash",
+                line_color="blue",
+                annotation_text=f"Max Measured Gradient ({exp_steep_dose:.3g} μM)",
+                annotation_position="bottom right",
+            )
+
+            # Shaded Intervals based on dropdown selection
+            choice = ti_select.value
+            if (
+                choice in ("All Candidate Intervals", "Piecewise Breakpoint CI")
+                and pw_res_data.is_ok()
+            ):
+                ci0, ci1 = pw_res_data.ok["ci"]
+                fig_tp.add_vrect(
+                    x0=max(tp_min_d * 0.5, ci0),
+                    x1=min(tp_max_d * 2.0, ci1),
+                    fillcolor="rgba(147, 112, 219, 0.15)",
+                    layer="below",
+                    line_width=1,
+                    line_dash="dash",
+                    line_color="mediumpurple",
+                    annotation_text="Breakpoint 95% CI",
+                    annotation_position="top left",
+                )
+
+            if choice in ("All Candidate Intervals", "Hill Dynamic Window (EC20–EC80)") and hill_info is not None:
+                hw0, hw1 = hill_info["window"]
+                fig_tp.add_vrect(
+                    x0=hw0,
+                    x1=hw1,
+                    fillcolor="rgba(255, 140, 0, 0.12)",
+                    layer="below",
+                    line_width=1,
+                    line_dash="dot",
+                    line_color="darkorange",
+                    annotation_text="Hill EC20–EC80 Window",
+                    annotation_position="top right",
+                )
+
+            if choice in ("All Candidate Intervals", "AI Gradient Maximum Window"):
+                aw0, aw1 = ai_window
+                fig_tp.add_vrect(
+                    x0=aw0,
+                    x1=aw1,
+                    fillcolor="rgba(0, 191, 255, 0.12)",
+                    layer="below",
+                    line_width=1,
+                    line_dash="dashdot",
+                    line_color="deepskyblue",
+                    annotation_text="AI Max Gradient Window",
+                    annotation_position="bottom left",
+                )
+
+            fig_tp.update_xaxes(type="log", title="Dose (μM, log scale)")
+            fig_tp.update_yaxes(title="Relative Viability (2^response)")
+            fig_tp.update_layout(
+                title=f"Tipping-Point & Transition Detection: {prism_drug_select.value} in {prism_cell_select.value}",
+                template="plotly_white",
+                height=450,
+                margin=dict(l=40, r=40, t=50, b=40),
+            )
+
+            tp_view = mo.vstack(
+                [
+                    mo.md("### Step 6 — AI Tipping-Point Detection"),
+                    mo.hstack([ti_select], justify="start"),
+                    mo.ui.plotly(fig_tp),
+                    mo.md(
+                        "> ⚠️ **Tipping-Point & Biological Switching Caveat:** Identified candidate transitions (gradients, breakpoints, and AI interpolations) quantify sharp mathematical sensitivity intervals. Steep continuous response kinetics must **never be equated with proven discrete biological switching or irreversible tipping points** without dynamic mechanistic or single-cell bistability assays. Furthermore, **AI-interpolated predictions are synthetic model outputs, not independent experimental evidence.**"
+                    ),
+                    mo.md("#### Candidate Transition Estimates & Model Disagreement Analysis"),
+                    tp_table,
+                ]
+            )
+
+    tp_view
+    return (tp_view,)
 
 
 @app.cell
