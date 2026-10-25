@@ -11,6 +11,7 @@ dependencies = [
     "piecewise-regression>=1.5.0",
     "plotly>=7.1.0",
     "polars>=2.0.0",
+    "pyreadr>=0.5.8",
     "scikit-learn>=1.9.1",
     "scipy>=1.18.1",
     "tabpfn>=9.2.0",
