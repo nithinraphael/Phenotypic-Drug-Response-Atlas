@@ -12,6 +12,7 @@
 #     "thunor",
 #     "tifffile",
 #     "torch",
+#     "torchvision",
 # ]
 # ///
 
@@ -24,6 +25,7 @@ app = marimo.App(width="medium")
 @app.cell
 def _():
     import os
+    import sys
     import zipfile
     from expression import Error, Ok, Result
     import marimo as mo
@@ -34,6 +36,7 @@ def _():
     import scipy.stats as stats
     import tifffile
     import torch
+    import torchvision.transforms.functional as TF
     from tabpfn import TabPFNRegressor
     from tabpfn.browser_auth import get_cached_token
     from thunor.curve_fit import HillCurveNull, fit_drc
@@ -43,6 +46,7 @@ def _():
         HillCurveNull,
         Ok,
         Result,
+        TF,
         TabPFNRegressor,
         fit_drc,
         get_cached_token,
@@ -53,6 +57,7 @@ def _():
         pl,
         pr,
         stats,
+        sys,
         tifffile,
         torch,
         zipfile,
@@ -1341,6 +1346,397 @@ def _(
 
     bbbc_view
     return arr, bbbc_view, cpd_info, img_element, img_file, img_res, load_field_image, moa_info, plate_id
+
+
+@app.cell
+def _(mo):
+    s7_model_select = mo.ui.dropdown(
+        options=["Cell-DINO ViT-S/8 (CP Checkpoint)", "DINO ViT-S/8 (Pretrained Baseline)"],
+        value="DINO ViT-S/8 (Pretrained Baseline)",
+        label="Model Architecture",
+    )
+    s7_ckpt_input = mo.ui.text(
+        value="data/bbbc021/cell_dino_cp_vits8.pth",
+        label="Checkpoint Path (for Cell-DINO)",
+    )
+    s7_batch_slider = mo.ui.slider(start=1, stop=8, step=1, value=4, label="GPU Batch Size")
+    s7_run_btn = mo.ui.run_button(label="Run Morphology Analysis")
+
+    s7_controls = mo.vstack(
+        [
+            mo.md("### Step 7 — Pretrained AI Microscopy Analysis"),
+            mo.md(
+                "> **Experimental Separation:** BBBC021 high-content imaging (24h MCF-7 breast cancer cells) evaluates phenotypic/morphological disruption across 3 fluorescence channels (DNA, Tubulin, Actin), remaining completely separate from PRISM viability screens (120h pooled assay)."
+            ),
+            mo.hstack([s7_model_select, s7_ckpt_input, s7_batch_slider, s7_run_btn], justify="start", gap=2),
+        ]
+    )
+    s7_controls
+    return s7_batch_slider, s7_ckpt_input, s7_controls, s7_model_select, s7_run_btn
+
+
+@app.cell
+def _(Error, Ok, Result, os, s7_ckpt_input, s7_model_select, sys, torch):
+    s7_device = torch.device(
+        "cuda"
+        if torch.cuda.is_available() and torch.cuda.get_device_properties(0).total_memory > 1e9
+        else "cpu"
+    )
+
+    def s7_get_model() -> Result[object, str]:
+        if s7_model_select.value == "Cell-DINO ViT-S/8 (CP Checkpoint)":
+            if not os.path.isfile(s7_ckpt_input.value):
+                return Error(
+                    f"Pretrained Cell-DINO ViT-S/8 checkpoint not found at '{s7_ckpt_input.value}'. "
+                    "Per project rules, random weights are strictly prohibited and results cannot be fabricated. "
+                    "Download weights from Meta (https://ai.meta.com/resources/models-and-libraries/cell-dino-downloads/) "
+                    "or switch model to 'DINO ViT-S/8 (Pretrained Baseline)'."
+                )
+            sys.path.insert(0, os.path.expanduser("~/.cache/torch/hub/facebookresearch_dinov2_main"))
+            from dinov2.hub.cell_dino.backbones import cell_dino_cp_vits8
+
+            m = cell_dino_cp_vits8(pretrained_path=s7_ckpt_input.value, in_channels=5).to(s7_device)
+            m.eval()
+            return Ok((m, 5))
+        m = torch.hub.load("facebookresearch/dino", "dino_vits8").to(s7_device)
+        m.eval()
+        return Ok((m, 3))
+
+    return s7_device, s7_get_model
+
+
+@app.cell
+def _(
+    Result,
+    TF,
+    bbbc021,
+    bbbc_cpd_select,
+    np,
+    os,
+    s7_batch_slider,
+    s7_device,
+    s7_get_model,
+    s7_run_btn,
+    tifffile,
+    torch,
+    zipfile,
+):
+    s7_cache_file = "data/bbbc021/embeddings_cache.npz"
+
+    if os.path.isfile(s7_cache_file):
+        _loaded = np.load(s7_cache_file, allow_pickle=True)
+        s7_cache = {k: _loaded[k] for k in _loaded.files}
+    else:
+        s7_cache = {}
+
+    s7_selected_cpd = bbbc_cpd_select.value
+    s7_meta = bbbc021["metadata"].filter(
+        (bbbc021["metadata"]["Image_Metadata_Plate_DAPI"] == "Week1_22123")
+        & (bbbc021["metadata"]["Image_Metadata_Compound"].is_in([s7_selected_cpd, "DMSO"]))
+    )
+
+    s7_needed_rows = [
+        _r
+        for _r in s7_meta.iter_rows(named=True)
+        if _r["Image_FileName_DAPI"].replace(".tif", "") not in s7_cache
+    ]
+
+    s7_vram_info = {"allocated": 0.0, "reserved": 0.0}
+
+    if s7_needed_rows and not s7_run_btn.value:
+        s7_extract_status = "needs_run"
+    elif not s7_needed_rows:
+        s7_extract_status = "ready"
+    else:
+        m_res = s7_get_model()
+        if m_res.is_error():
+            s7_extract_status = m_res
+        else:
+            m, n_chans = m_res.ok
+            batch_size = s7_batch_slider.value
+            with zipfile.ZipFile("data/bbbc021/plate.zip") as z:
+                for i in range(0, len(s7_needed_rows), batch_size):
+                    batch_rows = s7_needed_rows[i : i + batch_size]
+                    tensors = []
+                    for _r in batch_rows:
+                        _d = tifffile.imread(z.open("Week1_22123/" + _r["Image_FileName_DAPI"])).astype("float32")
+                        _t = tifffile.imread(z.open("Week1_22123/" + _r["Image_FileName_Tubulin"])).astype("float32")
+                        _a = tifffile.imread(z.open("Week1_22123/" + _r["Image_FileName_Actin"])).astype("float32")
+                        _img = torch.stack([torch.from_numpy(_d), torch.from_numpy(_t), torch.from_numpy(_a)])
+                        _img = TF.resize(TF.center_crop(_img, [512, 512]), [224, 224])
+                        _mv, _sv = _img.mean(dim=(-2, -1), keepdim=True), _img.std(dim=(-2, -1), keepdim=True)
+                        _normed = (_img - _mv) / (_sv + 1e-7)
+                        if n_chans == 5:
+                            _pad = torch.zeros((5, 224, 224), dtype=torch.float32)
+                            _pad[:3] = _normed
+                            _normed = _pad
+                        tensors.append(_normed)
+
+                    batch_t = torch.stack(tensors).to(s7_device)
+                    with torch.no_grad():
+                        embs = m(batch_t).cpu().numpy()
+                    for _r, _emb in zip(batch_rows, embs):
+                        _k = _r["Image_FileName_DAPI"].replace(".tif", "")
+                        s7_cache[_k] = _emb
+
+            np.savez_compressed(s7_cache_file, **s7_cache)
+            s7_extract_status = "ready"
+
+            if s7_device.type == "cuda":
+                s7_vram_info["allocated"] = torch.cuda.memory_allocated(s7_device) / 1e6
+                s7_vram_info["reserved"] = torch.cuda.memory_reserved(s7_device) / 1e6
+
+    return (
+        s7_cache,
+        s7_cache_file,
+        s7_extract_status,
+        s7_meta,
+        s7_needed_rows,
+        s7_selected_cpd,
+        s7_vram_info,
+    )
+
+
+@app.cell
+def _(
+    bbbc021,
+    np,
+    pl,
+    s7_cache,
+    s7_extract_status,
+    s7_meta,
+    s7_selected_cpd,
+):
+    if s7_extract_status != "ready":
+        s7_analysis_res = None
+    else:
+        dmso_rows = s7_meta.filter(pl.col("Image_Metadata_Compound") == "DMSO")
+        dmso_keys = [_r["Image_FileName_DAPI"].replace(".tif", "") for _r in dmso_rows.iter_rows(named=True)]
+        dmso_embs = [s7_cache[_k] for _k in dmso_keys if _k in s7_cache]
+        e_dmso = np.mean(dmso_embs, axis=0)
+
+        cpd_rows = s7_meta.filter(pl.col("Image_Metadata_Compound") == s7_selected_cpd)
+        s7_doses = sorted(cpd_rows["Image_Metadata_Concentration"].drop_nulls().unique().to_list())
+
+        s7_records = []
+        for _d in s7_doses:
+            rows_d = cpd_rows.filter(pl.col("Image_Metadata_Concentration") == _d)
+            keys_d = [_r["Image_FileName_DAPI"].replace(".tif", "") for _r in rows_d.iter_rows(named=True)]
+            embs_d = [s7_cache[_k] for _k in keys_d if _k in s7_cache]
+            mean_ed = np.mean(embs_d, axis=0)
+            cos_dist = float(1.0 - np.dot(e_dmso, mean_ed) / (np.linalg.norm(e_dmso) * np.linalg.norm(mean_ed)))
+            site_dists = [
+                float(1.0 - np.dot(e_dmso, _e) / (np.linalg.norm(e_dmso) * np.linalg.norm(_e)))
+                for _e in embs_d
+            ]
+            sem = float(np.std(site_dists) / np.sqrt(len(site_dists)))
+            s7_records.append({
+                "Dose (μM)": _d,
+                "Morphology Distance": round(cos_dist, 4),
+                "SEM": round(sem, 4),
+                "Replicates (N)": len(embs_d),
+            })
+
+        df_morph = pl.DataFrame(s7_records)
+
+        _d_vals = np.array([_r["Dose (μM)"] for _r in s7_records])
+        _dist_vals = np.array([_r["Morphology Distance"] for _r in s7_records])
+        _log_d = np.log10(_d_vals)
+        _d_dist = np.diff(_dist_vals)
+        _d_log = np.diff(_log_d)
+        _slopes = _d_dist / np.where(_d_log == 0, 1e-6, _d_log)
+
+        _max_slope_idx = int(np.argmax(_slopes))
+        inflection_dose = float(_d_vals[_max_slope_idx + 1])
+        inflection_interval = (float(_d_vals[_max_slope_idx]), float(_d_vals[_max_slope_idx + 1]))
+        max_slope_val = float(_slopes[_max_slope_idx])
+
+        s7_analysis_res = {
+            "df": df_morph,
+            "doses": s7_doses,
+            "inflection_dose": inflection_dose,
+            "inflection_interval": inflection_interval,
+            "max_slope": round(max_slope_val, 4),
+            "e_dmso": e_dmso,
+        }
+
+    return (s7_analysis_res,)
+
+
+@app.cell
+def _(mo, s7_analysis_res):
+    if s7_analysis_res is None:
+        s7_comp_dose_select = mo.ui.dropdown(
+            options={"None": 0.0},
+            value="None",
+            label="Compare Treated Dose (μM)",
+        )
+    else:
+        dose_opts = {f"{_d} μM": _d for _d in s7_analysis_res["doses"]}
+        default_val = (
+            f"{s7_analysis_res['inflection_dose']} μM"
+            if f"{s7_analysis_res['inflection_dose']} μM" in dose_opts
+            else list(dose_opts.keys())[0]
+        )
+        s7_comp_dose_select = mo.ui.dropdown(
+            options=dose_opts,
+            value=default_val,
+            label="Compare Treated Dose (μM)",
+        )
+
+    return (s7_comp_dose_select,)
+
+
+@app.cell
+def _(
+    go,
+    mo,
+    np,
+    pl,
+    s7_analysis_res,
+    s7_comp_dose_select,
+    s7_device,
+    s7_extract_status,
+    s7_meta,
+    s7_run_btn,
+    s7_selected_cpd,
+    s7_vram_info,
+    tifffile,
+    zipfile,
+):
+    if isinstance(s7_extract_status, object) and hasattr(s7_extract_status, "is_error"):
+        s7_output = mo.md(f"⚠️ **Model Error:** {s7_extract_status.error}")
+    elif s7_extract_status == "needs_run":
+        s7_output = mo.md(
+            f"ℹ️ **Ready to Analyze:** Click **'Run Morphology Analysis'** above to extract field embeddings for **{s7_selected_cpd}**."
+        )
+    elif s7_analysis_res is None:
+        s7_output = mo.md(
+            f"No image measurements found for compound **{s7_selected_cpd}** on plate `Week1_22123`."
+        )
+    else:
+        _df_m = s7_analysis_res["df"]
+        _inf_dose = s7_analysis_res["inflection_dose"]
+        _inf_int = s7_analysis_res["inflection_interval"]
+        _max_slope = s7_analysis_res["max_slope"]
+
+        s7_fig = go.Figure()
+        s7_fig.add_trace(
+            go.Scatter(
+                x=_df_m["Dose (μM)"].to_list(),
+                y=_df_m["Morphology Distance"].to_list(),
+                error_y=dict(type="data", array=_df_m["SEM"].to_list(), visible=True),
+                mode="lines+markers",
+                marker=dict(size=8, color="#1f77b4"),
+                line=dict(color="#1f77b4", width=2),
+                name="Field Embedding Distance",
+            )
+        )
+
+        s7_fig.add_vline(
+            x=_inf_dose,
+            line_width=2,
+            line_dash="dash",
+            line_color="#d62728",
+            annotation_text=f"Inflection: {_inf_dose} μM",
+            annotation_position="top right",
+        )
+        s7_fig.add_vrect(
+            x0=_inf_int[0],
+            x1=_inf_int[1],
+            fillcolor="red",
+            opacity=0.1,
+            line_width=0,
+        )
+
+        s7_fig.update_layout(
+            title=f"BBBC021 Morphological Disruption Profile — {s7_selected_cpd} (vs DMSO Control)",
+            xaxis=dict(title="Dose (μM, log scale)", type="log", gridcolor="#eee", showgrid=True),
+            yaxis=dict(title="Morphology Distance (Cosine Distance)", gridcolor="#eee", showgrid=True),
+            template="plotly_white",
+            height=420,
+            margin=dict(l=40, r=40, t=50, b=40),
+        )
+
+        def _load_rgb(row):
+            with zipfile.ZipFile("data/bbbc021/plate.zip") as z:
+                _d = tifffile.imread(z.open("Week1_22123/" + row["Image_FileName_DAPI"])).astype("float32")
+                _t = tifffile.imread(z.open("Week1_22123/" + row["Image_FileName_Tubulin"])).astype("float32")
+                _a = tifffile.imread(z.open("Week1_22123/" + row["Image_FileName_Actin"])).astype("float32")
+
+            def _norm_ch(ch):
+                p1, p99 = np.percentile(ch, (1, 99.5))
+                clipped = np.clip((ch - p1) / (p99 - p1 + 1e-7), 0, 1)
+                return (clipped * 255).astype("uint8")
+
+            return np.stack([_norm_ch(_a), _norm_ch(_t), _norm_ch(_d)], axis=-1)
+
+        dmso_row = s7_meta.filter(pl.col("Image_Metadata_Compound") == "DMSO").row(0, named=True)
+        img_dmso_rgb = _load_rgb(dmso_row)
+
+        treated_rows = s7_meta.filter(
+            (pl.col("Image_Metadata_Compound") == s7_selected_cpd)
+            & (pl.col("Image_Metadata_Concentration") == s7_comp_dose_select.value)
+        )
+        treated_row = treated_rows.row(0, named=True) if treated_rows.height > 0 else None
+        img_treated_rgb = _load_rgb(treated_row) if treated_row else None
+
+        img_compare = mo.hstack(
+            [
+                mo.vstack(
+                    [
+                        mo.md("**Vehicle Control (DMSO 0.0 μM)**<br>*Pseudo-color: Red = Actin, Green = Tubulin, Blue = DAPI*"),
+                        mo.image(img_dmso_rgb, width=420, caption=f"DMSO / Well {dmso_row['Image_Metadata_Well_DAPI']}"),
+                    ]
+                ),
+                (
+                    mo.vstack(
+                        [
+                            mo.md(
+                                f"**Treated ({s7_selected_cpd} @ {s7_comp_dose_select.value} μM)**<br>*Pseudo-color: Red = Actin, Green = Tubulin, Blue = DAPI*"
+                            ),
+                            mo.image(
+                                img_treated_rgb,
+                                width=420,
+                                caption=f"{s7_selected_cpd} @ {s7_comp_dose_select.value} μM / Well {treated_row['Image_Metadata_Well_DAPI']}",
+                            ),
+                        ]
+                    )
+                    if img_treated_rgb is not None
+                    else mo.md("No image available.")
+                ),
+            ],
+            gap=2,
+        )
+
+        s7_hw_info = (
+            f"**Hardware Verification:** Device: `{s7_device}` | "
+            f"Allocated VRAM: `{s7_vram_info['allocated']:.1f} MB` | "
+            f"Reserved VRAM: `{s7_vram_info['reserved']:.1f} MB`"
+        )
+
+        s7_output = mo.vstack(
+            [
+                mo.ui.plotly(s7_fig),
+                mo.md(
+                    f"> 🔬 **Morphology Inflection Dose:** **{_inf_dose} μM** "
+                    f"(Interval: `[{_inf_int[0]}, {_inf_int[1]}] μM`, max gradient: `{_max_slope}` $\\Delta\\text{{Score}}/\\log_{{10}}(\\text{{dose}})$).<br>"
+                    "> **Measurement Level:** **Field-Level (Whole-Field Image Embedding)**. "
+                    "Embeddings represent the aggregate cellular morphology across the entire field of view (384 dimensions), not segmented single cells.<br>"
+                    "> **Phenotypic Caveat:** Sharp morphological divergence indicates significant cytoskeletal and nuclear reorganization under drug exposure; "
+                    "however, continuous image metric steepness **must not be equated with irreversible biological switching** without single-cell kinetic or wash-out bistability assays."
+                ),
+                mo.md("#### Replicate Measurements & Morphology Distance Table"),
+                _df_m,
+                mo.md("#### Interactive Phenotypic Comparison"),
+                s7_comp_dose_select,
+                img_compare,
+                mo.md(s7_hw_info),
+            ]
+        )
+
+    s7_output
+    return (s7_output,)
 
 
 if __name__ == "__main__":
