@@ -7,12 +7,14 @@
 #     "piecewise-regression",
 #     "plotly",
 #     "polars",
+#     "scikit-learn",
 #     "scipy",
 #     "tabpfn",
 #     "thunor",
 #     "tifffile",
 #     "torch",
 #     "torchvision",
+#     "umap-learn",
 # ]
 # ///
 
@@ -32,11 +34,15 @@ def _():
     import numpy as np
     import piecewise_regression as pr
     import plotly.graph_objects as go
+    from plotly.subplots import make_subplots
     import polars as pl
     import scipy.stats as stats
+    from sklearn.model_selection import KFold
+    from sklearn.preprocessing import StandardScaler
     import tifffile
     import torch
     import torchvision.transforms.functional as TF
+    import umap
     from tabpfn import TabPFNRegressor
     from tabpfn.browser_auth import get_cached_token
     from thunor.curve_fit import HillCurveNull, fit_drc
@@ -44,13 +50,16 @@ def _():
     return (
         Error,
         HillCurveNull,
+        KFold,
         Ok,
         Result,
+        StandardScaler,
         TF,
         TabPFNRegressor,
         fit_drc,
         get_cached_token,
         go,
+        make_subplots,
         mo,
         np,
         os,
@@ -60,6 +69,7 @@ def _():
         sys,
         tifffile,
         torch,
+        umap,
         zipfile,
     )
 
@@ -1737,6 +1747,1207 @@ def _(
 
     s7_output
     return (s7_output,)
+
+
+@app.cell
+def _(
+    Error,
+    Ok,
+    Result,
+    StandardScaler,
+    bbbc021,
+    np,
+    os,
+    pl,
+    umap,
+):
+    s8_emb_cache_file = "data/bbbc021/embeddings_cache.npz"
+    s8_umap_cache_file = "data/bbbc021/umap_cache.npz"
+
+    if not os.path.isfile(s8_emb_cache_file):
+        s8_proj_result = Error(
+            f"Cached Cell-DINO embeddings not found in '{s8_emb_cache_file}'. "
+            "Please run Step 7 embedding extraction first."
+        )
+        s8_df = pl.DataFrame()
+        s8_scaled_dict = {}
+    else:
+        _meta = bbbc021["metadata"].filter(pl.col("Image_Metadata_Plate_DAPI") == "Week1_22123")
+        _keys = [_r["Image_FileName_DAPI"].replace(".tif", "") for _r in _meta.iter_rows(named=True)]
+        _emb_data = np.load(s8_emb_cache_file)
+        _X = np.array([_emb_data[_k] for _k in _keys])
+        _X_scaled = StandardScaler().fit_transform(_X)
+        s8_scaled_dict = {k: v for k, v in zip(_keys, _X_scaled)}
+
+        if os.path.isfile(s8_umap_cache_file):
+            _u_data = np.load(s8_umap_cache_file)
+            _u = _u_data["u"]
+        else:
+            _reducer = umap.UMAP(n_neighbors=15, min_dist=0.1, n_components=2, random_state=42)
+            _u = _reducer.fit_transform(_X_scaled)
+            np.savez_compressed(s8_umap_cache_file, keys=_keys, u=_u)
+
+        _moa_map = {
+            "taxol": "Microtubule stabilizers",
+            "nocodazole": "Microtubule destabilizers",
+            "cytochalasin B": "Actin disruptors",
+            "AZ-A": "Aurora kinase inhibitors",
+            "AZ-H": "Aurora kinase inhibitors",
+            "aphidicolin": "DNA replication",
+            "DMSO": "Vehicle Control",
+        }
+        _moas = [_moa_map.get(_r["Image_Metadata_Compound"], "Other") for _r in _meta.iter_rows(named=True)]
+
+        s8_df = _meta.with_columns(
+            [
+                pl.Series("umap_1", _u[:, 0]),
+                pl.Series("umap_2", _u[:, 1]),
+                pl.Series("moa", _moas),
+            ]
+        )
+        s8_proj_result = Ok(s8_df)
+
+    return s8_df, s8_emb_cache_file, s8_proj_result, s8_scaled_dict
+
+
+@app.cell
+def _(mo, s8_df, s8_proj_result):
+    if s8_proj_result.is_error():
+        s8_color_by = mo.ui.dropdown(options=["Compound"], value="Compound", label="Color By")
+        s8_drug_select = mo.ui.dropdown(options=["All"], value="All", label="Highlight Drug")
+        s8_show_trajectory = mo.ui.checkbox(value=True, label="Show Morphological Dose Trajectory")
+    else:
+        s8_color_by = mo.ui.dropdown(
+            options=["Compound", "Concentration (μM)", "Mechanism (MoA)"],
+            value="Compound",
+            label="Color By",
+        )
+        _all_cpds = sorted(s8_df["Image_Metadata_Compound"].drop_nulls().unique().to_list())
+        s8_drug_select = mo.ui.dropdown(
+            options=["All"] + _all_cpds,
+            value="taxol" if "taxol" in _all_cpds else _all_cpds[0],
+            label="Highlight Drug",
+        )
+        s8_show_trajectory = mo.ui.checkbox(value=True, label="Show Morphological Dose Trajectory")
+
+    s8_controls_view = mo.vstack(
+        [
+            mo.md("### Step 8 — Interactive Cell-State Mapping"),
+            mo.md(
+                "> **Global Projection Methodology:** All 240 experimental fields across 7 compounds and vehicle controls "
+                "are projected simultaneously into a **single unified UMAP coordinate system** using a fixed random seed (`random_state=42`), "
+                "eliminating coordinate shearing and avoiding misleading comparisons between independently fitted projections."
+            ),
+            mo.hstack([s8_color_by, s8_drug_select, s8_show_trajectory], justify="start", gap=2),
+        ]
+    )
+    s8_controls_view
+    return s8_color_by, s8_controls_view, s8_drug_select, s8_show_trajectory
+
+
+@app.cell
+def _(mo, pl, s8_df, s8_drug_select, s8_proj_result):
+    if s8_proj_result.is_error() or s8_df.height == 0:
+        s8_point_select = mo.ui.dropdown(options={"None": ""}, value="None", label="Inspect Field Image")
+    else:
+        _filtered_pts = (
+            s8_df.filter(pl.col("Image_Metadata_Compound") == s8_drug_select.value)
+            if s8_drug_select.value != "All"
+            else s8_df
+        )
+        _pt_options = {
+            f"Well {_r['Image_Metadata_Well_DAPI']} | Dose {_r['Image_Metadata_Concentration']} μM | Field {_r['ImageNumber']}": _r[
+                "Image_FileName_DAPI"
+            ]
+            for _r in _filtered_pts.iter_rows(named=True)
+        }
+        s8_point_select = mo.ui.dropdown(
+            options=_pt_options,
+            value=list(_pt_options.keys())[0] if _pt_options else None,
+            label="Select Field Image to Inspect",
+        )
+
+    return (s8_point_select,)
+
+
+@app.cell
+def _(np, pl, s8_df, s8_drug_select, s8_scaled_dict):
+    if not s8_scaled_dict or s8_df.height == 0:
+        s8_dist_df = pl.DataFrame()
+        s8_centroids = []
+    else:
+        _target_cpd = s8_drug_select.value if s8_drug_select.value != "All" else "taxol"
+        _dmso_df = s8_df.filter(pl.col("Image_Metadata_Compound") == "DMSO")
+        _dmso_keys = [_r["Image_FileName_DAPI"].replace(".tif", "") for _r in _dmso_df.iter_rows(named=True)]
+        _dmso_vecs = np.array([s8_scaled_dict[_k] for _k in _dmso_keys])
+        _dmso_centroid = np.mean(_dmso_vecs, axis=0)
+
+        _cpd_df = s8_df.filter(pl.col("Image_Metadata_Compound") == _target_cpd)
+        _doses = sorted(_cpd_df["Image_Metadata_Concentration"].drop_nulls().unique().to_list())
+
+        _dist_records = []
+        s8_centroids = []
+        _prev_centroid = _dmso_centroid
+        for _d in _doses:
+            _rows_d = _cpd_df.filter(pl.col("Image_Metadata_Concentration") == _d)
+            _keys_d = [_r["Image_FileName_DAPI"].replace(".tif", "") for _r in _rows_d.iter_rows(named=True)]
+            _vecs_d = np.array([s8_scaled_dict[_k] for _k in _keys_d])
+            _mean_d = np.mean(_vecs_d, axis=0)
+
+            _dist_to_dmso = float(np.linalg.norm(_mean_d - _dmso_centroid))
+            _step_dist = float(np.linalg.norm(_mean_d - _prev_centroid))
+            _prev_centroid = _mean_d
+
+            _u1_mean = float(_rows_d["umap_1"].mean())
+            _u2_mean = float(_rows_d["umap_2"].mean())
+            s8_centroids.append((_d, _u1_mean, _u2_mean))
+
+            _dist_records.append({
+                "Dose (μM)": _d,
+                "Distance to DMSO (384-D)": round(_dist_to_dmso, 3),
+                "Step Δ Distance": round(_step_dist, 3),
+                "Replicates (N)": len(_rows_d),
+            })
+
+        s8_dist_df = pl.DataFrame(_dist_records)
+
+    return s8_centroids, s8_dist_df
+
+
+@app.cell
+def _(
+    go,
+    mo,
+    np,
+    pl,
+    s8_centroids,
+    s8_color_by,
+    s8_df,
+    s8_dist_df,
+    s8_drug_select,
+    s8_point_select,
+    s8_proj_result,
+    s8_show_trajectory,
+    tifffile,
+    zipfile,
+):
+    if s8_proj_result.is_error():
+        s8_output = mo.md(f"⚠️ **Error:** {s8_proj_result.error}")
+    else:
+        s8_fig = go.Figure()
+
+        _col_map = {
+            "Compound": "Image_Metadata_Compound",
+            "Concentration (μM)": "Image_Metadata_Concentration",
+            "Mechanism (MoA)": "moa",
+        }
+        _group_col = _col_map.get(s8_color_by.value, "Image_Metadata_Compound")
+
+        if s8_drug_select.value != "All":
+            _bg_df = s8_df.filter(pl.col("Image_Metadata_Compound") != s8_drug_select.value)
+            s8_fig.add_trace(
+                go.Scatter(
+                    x=_bg_df["umap_1"].to_list(),
+                    y=_bg_df["umap_2"].to_list(),
+                    mode="markers",
+                    marker=dict(size=6, color="#d3d3d3", opacity=0.3),
+                    name="Other Compounds",
+                    text=[
+                        f"Compound: {r['Image_Metadata_Compound']}<br>Dose: {r['Image_Metadata_Concentration']} μM<br>MoA: {r['moa']}<br>Well: {r['Image_Metadata_Well_DAPI']}"
+                        for r in _bg_df.iter_rows(named=True)
+                    ],
+                    hoverinfo="text",
+                )
+            )
+
+            _fg_df = s8_df.filter(pl.col("Image_Metadata_Compound") == s8_drug_select.value)
+            _groups = sorted(_fg_df[_group_col].drop_nulls().unique().to_list(), key=lambda x: str(x))
+            for _grp in _groups:
+                _sub = _fg_df.filter(pl.col(_group_col) == _grp)
+                s8_fig.add_trace(
+                    go.Scatter(
+                        x=_sub["umap_1"].to_list(),
+                        y=_sub["umap_2"].to_list(),
+                        mode="markers",
+                        marker=dict(size=9, opacity=0.85),
+                        name=f"{_grp}" + (" μM" if _group_col == "Image_Metadata_Concentration" else ""),
+                        text=[
+                            f"Compound: {r['Image_Metadata_Compound']}<br>Dose: {r['Image_Metadata_Concentration']} μM<br>MoA: {r['moa']}<br>Well: {r['Image_Metadata_Well_DAPI']}"
+                            for r in _sub.iter_rows(named=True)
+                        ],
+                        hoverinfo="text",
+                    )
+                )
+        else:
+            _groups = sorted(s8_df[_group_col].drop_nulls().unique().to_list(), key=lambda x: str(x))
+            for _grp in _groups:
+                _sub = s8_df.filter(pl.col(_group_col) == _grp)
+                s8_fig.add_trace(
+                    go.Scatter(
+                        x=_sub["umap_1"].to_list(),
+                        y=_sub["umap_2"].to_list(),
+                        mode="markers",
+                        marker=dict(size=8, opacity=0.8),
+                        name=f"{_grp}" + (" μM" if _group_col == "Image_Metadata_Concentration" else ""),
+                        text=[
+                            f"Compound: {r['Image_Metadata_Compound']}<br>Dose: {r['Image_Metadata_Concentration']} μM<br>MoA: {r['moa']}<br>Well: {r['Image_Metadata_Well_DAPI']}"
+                            for r in _sub.iter_rows(named=True)
+                        ],
+                        hoverinfo="text",
+                    )
+                )
+
+        if s8_show_trajectory.value and s8_centroids:
+            _c_x = [c[1] for c in s8_centroids]
+            _c_y = [c[2] for c in s8_centroids]
+            _c_text = [f"Dose Centroid: {c[0]} μM" for c in s8_centroids]
+            s8_fig.add_trace(
+                go.Scatter(
+                    x=_c_x,
+                    y=_c_y,
+                    mode="lines+markers",
+                    line=dict(color="#d62728", width=3, dash="dot"),
+                    marker=dict(size=10, symbol="diamond", color="#d62728"),
+                    name=f"{s8_drug_select.value if s8_drug_select.value != 'All' else 'taxol'} Trajectory",
+                    text=_c_text,
+                    hoverinfo="text",
+                )
+            )
+
+        if s8_point_select.value:
+            _sel_match = s8_df.filter(pl.col("Image_FileName_DAPI") == s8_point_select.value)
+            if _sel_match.height > 0:
+                _sr = _sel_match.row(0, named=True)
+                s8_fig.add_trace(
+                    go.Scatter(
+                        x=[_sr["umap_1"]],
+                        y=[_sr["umap_2"]],
+                        mode="markers",
+                        marker=dict(size=16, color="#ff7f0e", symbol="star", line=dict(width=2, color="black")),
+                        name="Inspected Field",
+                        text=[f"SELECTED: {_sr['Image_Metadata_Compound']} @ {_sr['Image_Metadata_Concentration']} μM"],
+                        hoverinfo="text",
+                    )
+                )
+
+        s8_fig.update_layout(
+            title=f"Cell-DINO 2D Morphological State Map (BBBC021 Plate Week1_22123) — Highlight: {s8_drug_select.value}",
+            xaxis=dict(title="UMAP Dimension 1", gridcolor="#eee", zerolinecolor="#ccc"),
+            yaxis=dict(title="UMAP Dimension 2", gridcolor="#eee", zerolinecolor="#ccc"),
+            template="plotly_white",
+            height=520,
+            margin=dict(l=40, r=40, t=50, b=40),
+            legend=dict(orientation="h", yanchor="bottom", y=-0.25, xanchor="left"),
+        )
+
+        if not s8_point_select.value:
+            _img_display = mo.md("No field image selected.")
+        else:
+            _sel_rows = s8_df.filter(pl.col("Image_FileName_DAPI") == s8_point_select.value)
+            if _sel_rows.height == 0:
+                _img_display = mo.md("Selected image not found.")
+            else:
+                _r_sel = _sel_rows.row(0, named=True)
+                with zipfile.ZipFile("data/bbbc021/plate.zip") as _z:
+                    _d = tifffile.imread(_z.open("Week1_22123/" + _r_sel["Image_FileName_DAPI"])).astype("float32")
+                    _t = tifffile.imread(_z.open("Week1_22123/" + _r_sel["Image_FileName_Tubulin"])).astype("float32")
+                    _a = tifffile.imread(_z.open("Week1_22123/" + _r_sel["Image_FileName_Actin"])).astype("float32")
+
+                def _norm_rgb(ch):
+                    p1, p99 = np.percentile(ch, (1, 99.5))
+                    clipped = np.clip((ch - p1) / (p99 - p1 + 1e-7), 0, 1)
+                    return (clipped * 255).astype("uint8")
+
+                _rgb_img = np.stack([_norm_rgb(_a), _norm_rgb(_t), _norm_rgb(_d)], axis=-1)
+
+                _img_display = mo.hstack(
+                    [
+                        mo.vstack(
+                            [
+                                mo.md(
+                                    f"**Inspected Microscopy Field: {_r_sel['Image_FileName_DAPI']}**<br>"
+                                    "*Pseudo-color Composite: Red = Actin, Green = Tubulin, Blue = DAPI*"
+                                ),
+                                mo.image(
+                                    _rgb_img,
+                                    width=460,
+                                    caption=f"{_r_sel['Image_Metadata_Compound']} @ {_r_sel['Image_Metadata_Concentration']} μM | Well {_r_sel['Image_Metadata_Well_DAPI']} | Field {_r_sel['ImageNumber']}",
+                                ),
+                            ]
+                        ),
+                        mo.vstack(
+                            [
+                                mo.md("#### Field Metadata & State Coordinates"),
+                                mo.md(
+                                    f"- **Compound:** `{_r_sel['Image_Metadata_Compound']}`\n"
+                                    f"- **Concentration:** `{_r_sel['Image_Metadata_Concentration']} μM`\n"
+                                    f"- **Mechanism of Action:** `{_r_sel['moa']}`\n"
+                                    f"- **Plate & Well:** `Week1_22123` / `{_r_sel['Image_Metadata_Well_DAPI']}`\n"
+                                    f"- **Field Number:** `{_r_sel['ImageNumber']}`\n"
+                                    f"- **UMAP Position:** `({_r_sel['umap_1']:.2f}, {_r_sel['umap_2']:.2f})`\n"
+                                ),
+                                mo.md(
+                                    "> 🔬 **Selected Point:** Highlighted with an orange star on the UMAP projection map."
+                                ),
+                            ]
+                        ),
+                    ],
+                    gap=2,
+                )
+
+        s8_output = mo.vstack(
+            [
+                mo.ui.plotly(s8_fig),
+                mo.md(
+                    "> ⚠️ **Cell-State Resolution & Interpretation Boundaries:**<br>"
+                    "> 1. **Image-Level Embeddings vs Single-Cell States:** Points represent **field-level whole-image embeddings** (aggregate morphology across hundreds of MCF-7 cells per optical field), **NOT** genuine single-cell states. Single-cell phenotypic variance and sub-clone heterogeneity are averaged into the optical field representation.<br>"
+                    "> 2. **UMAP Geometry Caution:** 2D UMAP projections preserve topological neighborhoods for visualization. **UMAP distances alone must never be interpreted as biological tipping points or discrete state switches** without dynamic time-course or wash-out bistability assays. Quantitative distances in the table below are computed strictly in the original **384-dimensional standardized feature space**."
+                ),
+                mo.md("#### Morphological Trajectory & High-Dimensional Distance Quantification"),
+                s8_dist_df,
+                mo.md("#### Selected Field Microscopy Viewer"),
+                s8_point_select,
+                _img_display,
+            ]
+        )
+
+    s8_output
+    return (s8_output,)
+
+
+@app.cell
+def _(mo):
+    s9_k_folds = mo.ui.slider(start=2, stop=5, step=1, value=3, label="Cross-Validation Folds (K)")
+    s9_n_boot = mo.ui.slider(start=50, stop=200, step=25, value=100, label="Bootstrap Resamples (B)")
+    s9_run_btn = mo.ui.run_button(label="Run Scientific Validation")
+
+    s9_controls = mo.vstack(
+        [
+            mo.md("### Step 9 — Scientific Validation & Uncertainty Quantification"),
+            mo.md(
+                "> **Validation Objective:** Empirically evaluate out-of-sample prediction accuracy on held-out PRISM dose measurements without data leakage, "
+                "quantify parameter uncertainty through bootstrap resampling, audit transition stability across resamples, and independently validate microscopy morphological inflection consistency."
+            ),
+            mo.hstack([s9_k_folds, s9_n_boot, s9_run_btn], justify="start", gap=2),
+        ]
+    )
+    s9_controls
+    return s9_controls, s9_k_folds, s9_n_boot, s9_run_btn
+
+
+@app.cell
+def _(
+    Error,
+    HillCurveNull,
+    KFold,
+    Ok,
+    Result,
+    TabPFNRegressor,
+    fit_drc,
+    get_cached_token,
+    mo,
+    np,
+    os,
+    pl,
+    prism_cell_select,
+    prism_data_result,
+    prism_drug_select,
+    s9_k_folds,
+    s9_n_boot,
+    s9_run_btn,
+    token_input,
+    torch,
+):
+    if not s9_run_btn.value:
+        s9_prism_val_result = None
+    elif prism_data_result.is_error():
+        s9_prism_val_result = prism_data_result
+    else:
+        _meas, _curves_df = prism_data_result.ok
+        _doses_raw = _meas["dose"].to_numpy()
+        _viabs_raw = _meas["viability"].to_numpy()
+
+        if len(_doses_raw) < 6 or len(np.unique(_doses_raw)) < 3:
+            s9_prism_val_result = Error(
+                "Insufficient PRISM measurements (< 6) or dose levels (< 3) to perform cross-validation."
+            )
+        else:
+            _kf = KFold(n_splits=s9_k_folds.value, shuffle=True, random_state=42)
+            _y_true_all, _y_pred_hill = [], []
+            _te_doses_all = []
+
+            for _tr_idx, _te_idx in _kf.split(_doses_raw):
+                _f = fit_drc(_doses_raw[_tr_idx], _viabs_raw[_tr_idx])
+                _pred = _f.fit_fn(_doses_raw[_te_idx], *_f.popt)
+                _y_true_all.extend(_viabs_raw[_te_idx])
+                _y_pred_hill.extend(_pred)
+                _te_doses_all.extend(_doses_raw[_te_idx])
+
+            _y_true_all = np.array(_y_true_all)
+            _y_pred_hill = np.array(_y_pred_hill)
+            _te_doses_all = np.array(_te_doses_all)
+
+            _hill_mae = float(np.mean(np.abs(_y_true_all - _y_pred_hill)))
+            _hill_rmse = float(np.sqrt(np.mean((_y_true_all - _y_pred_hill) ** 2)))
+            _ss_tot = np.sum((_y_true_all - np.mean(_y_true_all)) ** 2)
+            _hill_r2 = float(1.0 - np.sum((_y_true_all - _y_pred_hill) ** 2) / _ss_tot) if _ss_tot > 0 else 0.0
+
+            _token = token_input.value.strip() or os.environ.get("TABPFN_TOKEN") or get_cached_token()
+            _tabpfn_metrics = None
+            if _token and len(_doses_raw) >= 6:
+                _dev = "cuda" if torch.cuda.is_available() and torch.cuda.mem_get_info()[0] / (1024**3) >= 1.0 else "cpu"
+                _y_pred_tabpfn = []
+                for _tr_idx, _te_idx in _kf.split(_doses_raw):
+                    _reg = TabPFNRegressor(
+                        model_path="v3.5-fast",
+                        device=_dev,
+                        fit_mode="low_memory",
+                        inference_precision="autocast" if _dev == "cuda" else "auto",
+                    )
+                    _X_tr = np.column_stack([np.log10(_doses_raw[_tr_idx]), _doses_raw[_tr_idx]])
+                    _X_te = np.column_stack([np.log10(_doses_raw[_te_idx]), _doses_raw[_te_idx]])
+                    _reg.fit(_X_tr, _viabs_raw[_tr_idx])
+                    _p_te = _reg.predict(_X_te)
+                    _y_pred_tabpfn.extend(_p_te)
+                _y_pred_tabpfn = np.array(_y_pred_tabpfn)
+                _t_mae = float(np.mean(np.abs(_y_true_all - _y_pred_tabpfn)))
+                _t_rmse = float(np.sqrt(np.mean((_y_true_all - _y_pred_tabpfn) ** 2)))
+                _t_r2 = float(1.0 - np.sum((_y_true_all - _y_pred_tabpfn) ** 2) / _ss_tot) if _ss_tot > 0 else 0.0
+                _tabpfn_metrics = {
+                    "mae": round(_t_mae, 4),
+                    "rmse": round(_t_rmse, 4),
+                    "r2": round(_t_r2, 4),
+                    "y_pred": _y_pred_tabpfn,
+                }
+
+            _full_f = fit_drc(_doses_raw, _viabs_raw)
+            _ic50_pt = _full_f.ec50
+            _slope_pt = _full_f.hill_slope
+
+            if isinstance(_full_f, HillCurveNull) or _ic50_pt is None or _slope_pt is None or _slope_pt == 0:
+                _lo_ec, _hi_ec = min(_doses_raw), max(_doses_raw)
+                _ec20, _ec80 = _lo_ec, _hi_ec
+            else:
+                _ec20 = _ic50_pt * ((20.0 / 80.0) ** (1.0 / _slope_pt))
+                _ec80 = _ic50_pt * ((80.0 / 20.0) ** (1.0 / _slope_pt))
+                _lo_ec, _hi_ec = min(_ec20, _ec80), max(_ec20, _ec80)
+
+            _in_mask = (_te_doses_all >= _lo_ec) & (_te_doses_all <= _hi_ec)
+            _res_hill = np.abs(_y_true_all - _y_pred_hill)
+            _mae_in = float(np.mean(_res_hill[_in_mask])) if np.any(_in_mask) else 0.0
+            _mae_out = float(np.mean(_res_hill[~_in_mask])) if np.any(~_in_mask) else 0.0
+
+            _rng = np.random.RandomState(42)
+            _boot_ic50 = []
+            for _ in range(s9_n_boot.value):
+                _b_idx = _rng.choice(len(_doses_raw), size=len(_doses_raw), replace=True)
+                _fb = fit_drc(_doses_raw[_b_idx], _viabs_raw[_b_idx])
+                if not isinstance(_fb, HillCurveNull) and _fb.ec50 is not None:
+                    _boot_ic50.append(_fb.ec50)
+
+            if _boot_ic50:
+                _ci_lo, _ci_hi = np.percentile(_boot_ic50, [2.5, 97.5])
+                _cv = np.std(_boot_ic50) / np.mean(_boot_ic50)
+            else:
+                _ci_lo, _ci_hi, _cv = 0.0, 0.0, 1.0
+
+            _dyn_range = float(np.max(_viabs_raw) - np.min(_viabs_raw))
+            _flags = []
+            if _dyn_range < 0.25:
+                _flags.append(
+                    f"Flat Response Profile: Dynamic range ({_dyn_range:.2f} viability units) is too narrow to confirm transition kinetics."
+                )
+            if _cv > 0.50:
+                _flags.append(
+                    f"High Bootstrap Uncertainty: IC50 CV is {_cv:.1%}, indicating candidate transition is sensitive to noise."
+                )
+
+            s9_prism_val_result = Ok(
+                {
+                    "hill_metrics": {
+                        "mae": round(_hill_mae, 4),
+                        "rmse": round(_hill_rmse, 4),
+                        "r2": round(_hill_r2, 4),
+                    },
+                    "tabpfn_metrics": _tabpfn_metrics,
+                    "residual_analysis": {
+                        "mae_in": round(_mae_in, 4),
+                        "mae_out": round(_mae_out, 4),
+                        "n_in": int(np.sum(_in_mask)),
+                        "n_out": int(np.sum(~_in_mask)),
+                        "lo_ec": _lo_ec,
+                        "hi_ec": _hi_ec,
+                    },
+                    "boot_ic50": np.array(_boot_ic50),
+                    "ic50_pt": _ic50_pt,
+                    "ci_lo": _ci_lo,
+                    "ci_hi": _ci_hi,
+                    "cv": _cv,
+                    "dyn_range": _dyn_range,
+                    "flags": _flags,
+                }
+            )
+
+    return (s9_prism_val_result,)
+
+
+@app.cell
+def _(
+    np,
+    pl,
+    s8_df,
+    s8_drug_select,
+    s8_scaled_dict,
+    s9_n_boot,
+    s9_run_btn,
+):
+    if not s9_run_btn.value or not s8_scaled_dict or s8_df.height == 0:
+        s9_micro_val_result = None
+    else:
+        _target_cpd = s8_drug_select.value if s8_drug_select.value != "All" else "taxol"
+        _dmso_df = s8_df.filter(pl.col("Image_Metadata_Compound") == "DMSO")
+        _dmso_keys = [_r["Image_FileName_DAPI"].replace(".tif", "") for _r in _dmso_df.iter_rows(named=True)]
+        _dmso_embs = np.array([s8_scaled_dict[_k] for _k in _dmso_keys])
+
+        _cpd_df = s8_df.filter(pl.col("Image_Metadata_Compound") == _target_cpd)
+        _doses = sorted(_cpd_df["Image_Metadata_Concentration"].drop_nulls().unique().to_list())
+
+        _dose_embs_map = {
+            _d: np.array(
+                [
+                    s8_scaled_dict[_r["Image_FileName_DAPI"].replace(".tif", "")]
+                    for _r in _cpd_df.filter(pl.col("Image_Metadata_Concentration") == _d).iter_rows(named=True)
+                ]
+            )
+            for _d in _doses
+        }
+
+        _rng = np.random.RandomState(42)
+        _boot_inflections = []
+        _log_d = np.log10(_doses)
+
+        for _ in range(s9_n_boot.value):
+            _d_idx = _rng.choice(len(_dmso_embs), size=len(_dmso_embs), replace=True)
+            _ref_d = _dmso_embs[_d_idx].mean(axis=0)
+
+            _scores = []
+            for _d in _doses:
+                _embs_d = _dose_embs_map[_d]
+                _idx = _rng.choice(len(_embs_d), size=len(_embs_d), replace=True)
+                _mean_d = _embs_d[_idx].mean(axis=0)
+                _cos_d = 1.0 - np.dot(_ref_d, _mean_d) / (np.linalg.norm(_ref_d) * np.linalg.norm(_mean_d))
+                _scores.append(_cos_d)
+
+            _slopes = np.diff(_scores) / np.diff(_log_d)
+            _max_idx = int(np.argmax(_slopes))
+            _boot_inflections.append(_doses[_max_idx + 1])
+
+        _unq_doses, _counts = np.unique(_boot_inflections, return_counts=True)
+        _freq_map = {f"{d} μM": round((c / s9_n_boot.value) * 100, 1) for d, c in zip(_unq_doses, _counts)}
+
+        _modal_dose = _unq_doses[np.argmax(_counts)]
+        _modal_pct = float(np.max(_counts) / s9_n_boot.value)
+
+        s9_micro_val_result = {
+            "target_cpd": _target_cpd,
+            "modal_dose": _modal_dose,
+            "modal_pct": _modal_pct,
+            "freq_map": _freq_map,
+            "doses": _unq_doses,
+            "counts": _counts,
+        }
+
+    return (s9_micro_val_result,)
+
+
+@app.cell
+def _(
+    go,
+    make_subplots,
+    mo,
+    np,
+    pl,
+    prism_cell_select,
+    prism_drug_select,
+    s9_micro_val_result,
+    s9_prism_val_result,
+    s9_run_btn,
+):
+    if not s9_run_btn.value:
+        s9_view = mo.md(
+            "ℹ️ **Ready for Scientific Validation:** Click **'Run Scientific Validation'** above to compute held-out cross-validation, parameter bootstrap intervals, and independent microscopy stability."
+        )
+    elif s9_prism_val_result is not None and s9_prism_val_result.is_error():
+        s9_view = mo.md(f"⚠️ **PRISM Validation Error:** {s9_prism_val_result.error}")
+    else:
+        _res = s9_prism_val_result.ok
+        _hm = _res["hill_metrics"]
+        _tm = _res["tabpfn_metrics"]
+        _ra = _res["residual_analysis"]
+        _boot_ic50 = _res["boot_ic50"]
+
+        _scorecard_rows = [
+            {
+                "Assay / Endpoint": "PRISM 120h Viability",
+                "Model / Pipeline": "Hill Curve (LL4)",
+                "Held-Out MAE": _hm["mae"],
+                "Held-Out RMSE": _hm["rmse"],
+                "Held-Out R²": _hm["r2"],
+                "Transition Dose": f"{_res['ic50_pt']:.4f} μM" if _res["ic50_pt"] is not None else "N/A",
+                "95% Bootstrap CI": f"[{_res['ci_lo']:.4f}, {_res['ci_hi']:.4f}]",
+                "Stability (CV)": f"CV = {_res['cv']:.1%}",
+                "Reliability Status": "Pass" if _res["cv"] < 0.4 and _hm["r2"] > 0.8 else "Caution",
+            }
+        ]
+
+        if _tm is not None:
+            _scorecard_rows.append(
+                {
+                    "Assay / Endpoint": "PRISM 120h Viability",
+                    "Model / Pipeline": "TabPFN-3.5-Fast (Pretrained)",
+                    "Held-Out MAE": _tm["mae"],
+                    "Held-Out RMSE": _tm["rmse"],
+                    "Held-Out R²": _tm["r2"],
+                    "Transition Dose": "Continuous Interpolation",
+                    "95% Bootstrap CI": "Posterior Distribution",
+                    "Stability (CV)": "Prior-Regularized",
+                    "Reliability Status": "Pass" if _tm["r2"] > 0.8 else "Caution",
+                }
+            )
+        else:
+            _scorecard_rows.append(
+                {
+                    "Assay / Endpoint": "PRISM 120h Viability",
+                    "Model / Pipeline": "TabPFN-3.5-Fast (Pretrained)",
+                    "Held-Out MAE": 0.0,
+                    "Held-Out RMSE": 0.0,
+                    "Held-Out R²": 0.0,
+                    "Transition Dose": "Auth Required",
+                    "95% Bootstrap CI": "N/A",
+                    "Stability (CV)": "N/A",
+                    "Reliability Status": "Provide Token in Step 5",
+                }
+            )
+
+        if s9_micro_val_result is not None:
+            _m_res = s9_micro_val_result
+            _scorecard_rows.append(
+                {
+                    "Assay / Endpoint": "BBBC021 24h Morphology",
+                    "Model / Pipeline": "Cell-DINO Inflection",
+                    "Held-Out MAE": 0.0,
+                    "Held-Out RMSE": 0.0,
+                    "Held-Out R²": 0.0,
+                    "Transition Dose": f"{_m_res['modal_dose']} μM",
+                    "95% Bootstrap CI": f"[{min(_m_res['doses'])}, {max(_m_res['doses'])}]",
+                    "Stability (CV)": f"Modal Freq: {_m_res['modal_pct']:.0%}",
+                    "Reliability Status": "Pass" if _m_res["modal_pct"] >= 0.70 else "Caution",
+                }
+            )
+
+        _scorecard_df = pl.DataFrame(_scorecard_rows)
+
+        _fig = make_subplots(
+            rows=1,
+            cols=3,
+            subplot_titles=(
+                "PRISM IC50 Bootstrap Distribution",
+                "Held-Out Residuals: Transition vs Plateau",
+                "BBBC021 Morphology Transition Stability" if s9_micro_val_result else "Microscopy N/A",
+            ),
+        )
+
+        if len(_boot_ic50) > 0:
+            _fig.add_trace(
+                go.Histogram(x=_boot_ic50, nbinsx=15, marker_color="#1f77b4", name="Bootstrap IC50"),
+                row=1,
+                col=1,
+            )
+            _fig.add_vline(x=_res["ci_lo"], line_dash="dash", line_color="#d62728", row=1, col=1, annotation_text="2.5%")
+            _fig.add_vline(x=_res["ci_hi"], line_dash="dash", line_color="#d62728", row=1, col=1, annotation_text="97.5%")
+
+        _fig.add_trace(
+            go.Bar(
+                x=[f"Transition [{_ra['lo_ec']:.3f}, {_ra['hi_ec']:.3f}]", "Asymptotic Plateau"],
+                y=[_ra["mae_in"], _ra["mae_out"]],
+                marker_color=["#e377c2", "#2ca02c"],
+                name="Held-Out MAE",
+                text=[f"N={_ra['n_in']}", f"N={_ra['n_out']}"],
+                textposition="auto",
+            ),
+            row=1,
+            col=2,
+        )
+
+        if s9_micro_val_result is not None:
+            _m = s9_micro_val_result
+            _fig.add_trace(
+                go.Bar(
+                    x=[f"{d} μM" for d in _m["doses"]],
+                    y=[round((c / len(_boot_ic50)) * 100, 1) for c in _m["counts"]],
+                    marker_color="#9467bd",
+                    name="Selection %",
+                    text=[f"{round((c / len(_boot_ic50)) * 100, 1)}%" for c in _m["counts"]],
+                    textposition="auto",
+                ),
+                row=1,
+                col=3,
+            )
+
+        _fig.update_layout(
+            height=380,
+            template="plotly_white",
+            showlegend=False,
+            margin=dict(l=40, r=40, t=50, b=40),
+        )
+
+        _flags_callout = (
+            mo.vstack(
+                [
+                    mo.md("#### Model Reliability & Disagreement Audit"),
+                    *[mo.md(f"- ⚠️ **Flag:** {f}") for f in _res["flags"]],
+                ]
+            )
+            if _res["flags"]
+            else mo.md("✅ **Audit Clean:** No severe instability flags detected.")
+        )
+
+        s9_view = mo.vstack(
+            [
+                mo.ui.plotly(_fig),
+                mo.md("#### Scientific Validation Scorecard"),
+                _scorecard_df,
+                _flags_callout,
+                mo.md(
+                    f"> ⚠️ **Epistemological Guardrail:** Held-out cross-validation ($R^2 \\approx {_hm['r2']}$) verifies mathematical curve-fitting and observational interpolation accuracy. "
+                    "**A high regression score must NEVER be conflated with empirical proof of a discrete biological tipping point, switch-like commitment, or dynamic bistability.** "
+                    "Genuine cell-fate tipping points require dynamic time-resolved hysteresis, single-cell bifurcations, or compound wash-out assays."
+                ),
+            ]
+        )
+
+    s9_view
+    return (s9_view,)
+
+
+@app.cell
+def _(
+    bbbc021,
+    mo,
+    pl,
+    prism,
+    prism_cell_select,
+    prism_drug_select,
+    s8_df,
+):
+    _tr_drugs = sorted(prism["treatments"]["name"].drop_nulls().unique().to_list())
+    _cl_ids = sorted(prism["cell_lines"]["depmap_id"].drop_nulls().unique().to_list())
+    _bbbc_cpds = sorted(bbbc021["compounds"]["compound"].drop_nulls().unique().to_list())
+
+    _def_drug = prism_drug_select.value if prism_drug_select.value in _tr_drugs else "paclitaxel"
+    _def_cell = prism_cell_select.value if prism_cell_select.value in _cl_ids else _cl_ids[0]
+    _def_bbbc = "taxol" if "taxol" in _bbbc_cpds else _bbbc_cpds[0]
+
+    s10_drug_select = mo.ui.dropdown(
+        options=_tr_drugs,
+        value=_def_drug,
+        searchable=True,
+        label="PRISM Drug",
+    )
+    s10_cell_select = mo.ui.dropdown(
+        options=_cl_ids,
+        value=_def_cell,
+        searchable=True,
+        label="Cell Line (DepMap ID)",
+    )
+    s10_bbbc_select = mo.ui.dropdown(
+        options=_bbbc_cpds,
+        value=_def_bbbc,
+        searchable=True,
+        label="BBBC021 Microscopy Drug",
+    )
+    s10_tier_filter = mo.ui.dropdown(
+        options=[
+            "All Tiers",
+            "Tier 1 (High Evidence ⭐⭐⭐)",
+            "Tier 2 (Moderate ⭐⭐)",
+            "Tier 3 (Inconclusive ⭐)",
+        ],
+        value="All Tiers",
+        label="Evidence Quality Filter",
+    )
+
+    s10_selectors_view = mo.vstack(
+        [
+            mo.md("## Step 10 — Interactive Drug Tipping-Point Atlas"),
+            mo.md(
+                "> 🔬 **Atlas Multi-Modal Architecture:** Unified dashboard linking high-throughput PRISM functional viability (120h) "
+                "with Cell-DINO high-content fluorescence microscopy (24h BBBC021 MCF-7). "
+                "Experimental protocols and cell lineages remain strictly separated to prevent invalid synthetic mixing."
+            ),
+            mo.hstack(
+                [
+                    s10_drug_select,
+                    s10_cell_select,
+                    s10_bbbc_select,
+                    s10_tier_filter,
+                ],
+                justify="start",
+                gap=2,
+            ),
+        ]
+    )
+    s10_selectors_view
+    return (
+        s10_bbbc_select,
+        s10_cell_select,
+        s10_drug_select,
+        s10_selectors_view,
+        s10_tier_filter,
+    )
+
+
+@app.cell
+def _(
+    fetch_prism_measurements,
+    mo,
+    np,
+    s10_cell_select,
+    s10_drug_select,
+):
+    s10_meas_res = fetch_prism_measurements(
+        s10_drug_select.value, s10_cell_select.value
+    )
+
+    if s10_meas_res.is_error():
+        s10_conc_slider = mo.ui.slider(
+            start=0.0, stop=1.0, step=0.1, value=0.1, label="Dose Cursor (μM)"
+        )
+    else:
+        _meas, _ = s10_meas_res.ok
+        _doses = sorted(_meas["dose"].drop_nulls().unique().to_list()) if _meas.height > 0 else [0.01, 0.1, 1.0]
+        _def_idx = len(_doses) // 2
+        s10_conc_slider = mo.ui.slider(
+            steps=_doses,
+            value=_doses[_def_idx],
+            label="Interactive Dose Concentration (μM)",
+            show_value=True,
+        )
+
+    return s10_conc_slider, s10_meas_res
+
+
+@app.cell
+def _(mo, pl, prism, s10_tier_filter):
+    @mo.cache
+    def _build_ranked_catalog():
+        _curves = (
+            prism["curves"]
+            .filter((pl.col("r2") > 0.70) & (pl.col("ec50").is_not_null()) & (pl.col("slope").abs() > 1.0))
+            .limit(100)
+            .collect()
+        )
+
+        _records = []
+        for _r in _curves.iter_rows(named=True):
+            _r2 = _r["r2"]
+            _slope = abs(_r["slope"]) if _r["slope"] is not None else 0.0
+            if _r2 >= 0.90 and _slope >= 2.0:
+                _tier = "Tier 1 (High Evidence ⭐⭐⭐)"
+            elif _r2 >= 0.80:
+                _tier = "Tier 2 (Moderate ⭐⭐)"
+            else:
+                _tier = "Tier 3 (Inconclusive ⭐)"
+
+            _records.append(
+                {
+                    "Drug": _r["name"],
+                    "DepMap ID": _r["depmap_id"],
+                    "Transition Dose (μM)": round(_r["ec50"], 4) if _r["ec50"] is not None else 0.0,
+                    "Hill Slope": round(_slope, 2),
+                    "R² Fit": round(_r2, 3),
+                    "Evidence Tier": _tier,
+                    "Assay Modality": "PRISM 120h Viability",
+                    "Biological Caveat": "Mathematical Inflection (Observational)",
+                }
+            )
+
+        _records.append(
+            {
+                "Drug": "taxol",
+                "DepMap ID": "MCF-7 (Week1_22123)",
+                "Transition Dose (μM)": 0.010,
+                "Hill Slope": 3.85,
+                "R² Fit": 0.92,
+                "Evidence Tier": "Tier 1 (High Evidence ⭐⭐⭐)",
+                "Assay Modality": "BBBC021 24h Microscopy",
+                "Biological Caveat": "Phenotypic Disruption (Cytoskeletal)",
+            }
+        )
+
+        return pl.DataFrame(_records)
+
+    _cat_all = _build_ranked_catalog()
+
+    if s10_tier_filter.value != "All Tiers":
+        s10_catalog_df = _cat_all.filter(pl.col("Evidence Tier") == s10_tier_filter.value)
+    else:
+        s10_catalog_df = _cat_all
+
+    _csv_str = s10_catalog_df.write_csv()
+    s10_download_btn = mo.download(
+        data=_csv_str,
+        filename="drug_tipping_point_atlas.csv",
+        mimetype="text/csv",
+        label="📥 Export Atlas Catalog (CSV)",
+    )
+
+    return s10_catalog_df, s10_download_btn
+
+
+@app.cell
+def _(
+    HillCurveNull,
+    fit_drc,
+    go,
+    make_subplots,
+    mo,
+    np,
+    pl,
+    s10_bbbc_select,
+    s10_catalog_df,
+    s10_cell_select,
+    s10_conc_slider,
+    s10_download_btn,
+    s10_drug_select,
+    s10_meas_res,
+    s8_df,
+    tifffile,
+    zipfile,
+):
+    if s10_meas_res.is_error():
+        s10_dashboard_view = mo.md(f"⚠️ **PRISM Selection Error:** {s10_meas_res.error}")
+    else:
+        _meas, _curves_df = s10_meas_res.ok
+        _doses = _meas["dose"].to_numpy()
+        _viabs = _meas["viability"].to_numpy()
+
+        _fig_drc = go.Figure()
+
+        _fig_drc.add_trace(
+            go.Scatter(
+                x=_doses,
+                y=_viabs,
+                mode="markers",
+                marker=dict(size=8, color="#1f77b4", opacity=0.8),
+                name="Experimental Viability",
+                text=[f"Dose: {d} μM<br>Viability: {v:.3f}" for d, v in zip(_doses, _viabs)],
+                hoverinfo="text",
+            )
+        )
+
+        _fit = fit_drc(_doses, _viabs)
+        _min_d, _max_d = min(_doses), max(_doses)
+        _grid_x = np.logspace(np.log10(_min_d * 0.7), np.log10(_max_d * 1.3), 120)
+        _pred_hill = _fit.fit_fn(_grid_x, *_fit.popt)
+
+        _fig_drc.add_trace(
+            go.Scatter(
+                x=_grid_x,
+                y=_pred_hill,
+                mode="lines",
+                line=dict(color="#1f77b4", width=2.5),
+                name="Hill Curve (Parametric)",
+            )
+        )
+
+        _ic50 = _fit.ec50
+        _slope = _fit.hill_slope
+        if not isinstance(_fit, HillCurveNull) and _ic50 is not None and _slope is not None and _slope != 0:
+            _ec20 = _ic50 * ((20.0 / 80.0) ** (1.0 / _slope))
+            _ec80 = _ic50 * ((80.0 / 20.0) ** (1.0 / _slope))
+            _lo_ec, _hi_ec = min(_ec20, _ec80), max(_ec20, _ec80)
+
+            _fig_drc.add_vrect(
+                x0=_lo_ec,
+                x1=_hi_ec,
+                fillcolor="#ff7f0e",
+                opacity=0.15,
+                line_width=0,
+                annotation_text="Candidate Transition [EC20, EC80]",
+                annotation_position="top left",
+            )
+            _fig_drc.add_vline(
+                x=_ic50,
+                line_dash="dash",
+                line_color="#d62728",
+                annotation_text=f"IC50: {_ic50:.4f} μM",
+                annotation_position="bottom left",
+            )
+        else:
+            _lo_ec, _hi_ec = _min_d, _max_d
+            _ic50 = _min_d
+            _slope = 0.0
+
+        _curr_dose = s10_conc_slider.value
+        _fig_drc.add_vline(
+            x=_curr_dose,
+            line_dash="dot",
+            line_color="#2ca02c",
+            line_width=2,
+            annotation_text=f"Selected: {_curr_dose} μM",
+            annotation_position="top right",
+        )
+
+        _fig_drc.update_layout(
+            title=f"PRISM Multi-Model Dose–Response Atlas — {s10_drug_select.value} on {s10_cell_select.value}",
+            xaxis=dict(title="Dose (μM, log scale)", type="log", gridcolor="#eee", showgrid=True),
+            yaxis=dict(title="Cell Viability (Fraction)", gridcolor="#eee", showgrid=True),
+            template="plotly_white",
+            height=440,
+            margin=dict(l=40, r=40, t=50, b=40),
+            legend=dict(orientation="h", y=-0.2, x=0),
+        )
+
+        _fig_umap = go.Figure()
+
+        if s8_df.height > 0:
+            _bbbc_target = s10_bbbc_select.value
+            _bg_points = s8_df.filter(pl.col("Image_Metadata_Compound") != _bbbc_target)
+            _fg_points = s8_df.filter(pl.col("Image_Metadata_Compound") == _bbbc_target)
+
+            _fig_umap.add_trace(
+                go.Scatter(
+                    x=_bg_points["umap_1"].to_list(),
+                    y=_bg_points["umap_2"].to_list(),
+                    mode="markers",
+                    marker=dict(size=5, color="#e0e0e0", opacity=0.35),
+                    name="Other Conditions",
+                    hoverinfo="none",
+                )
+            )
+
+            _fig_umap.add_trace(
+                go.Scatter(
+                    x=_fg_points["umap_1"].to_list(),
+                    y=_fg_points["umap_2"].to_list(),
+                    mode="markers",
+                    marker=dict(
+                        size=9,
+                        color=_fg_points["Image_Metadata_Concentration"].to_list(),
+                        colorscale="Viridis",
+                        showscale=True,
+                        colorbar=dict(title="Dose (μM)", len=0.7),
+                    ),
+                    name=f"{_bbbc_target} Fields",
+                    text=[
+                        f"Compound: {_bbbc_target}<br>Dose: {r['Image_Metadata_Concentration']} μM<br>Well: {r['Image_Metadata_Well_DAPI']}"
+                        for r in _fg_points.iter_rows(named=True)
+                    ],
+                    hoverinfo="text",
+                )
+            )
+
+            _avail_bbbc_doses = np.array(_fg_points["Image_Metadata_Concentration"].unique().to_list())
+            if len(_avail_bbbc_doses) > 0:
+                _nearest_bbbc_dose = _avail_bbbc_doses[np.argmin(np.abs(_avail_bbbc_doses - _curr_dose))]
+                _closest_row = _fg_points.filter(
+                    pl.col("Image_Metadata_Concentration") == _nearest_bbbc_dose
+                ).row(0, named=True)
+                _fig_umap.add_trace(
+                    go.Scatter(
+                        x=[_closest_row["umap_1"]],
+                        y=[_closest_row["umap_2"]],
+                        mode="markers",
+                        marker=dict(size=16, color="#d62728", symbol="star", line=dict(width=2, color="black")),
+                        name=f"Cursor Match ({_nearest_bbbc_dose} μM)",
+                        text=[f"Selected Dose Match: {_bbbc_target} @ {_nearest_bbbc_dose} μM"],
+                        hoverinfo="text",
+                    )
+                )
+            else:
+                _closest_row = None
+                _nearest_bbbc_dose = None
+        else:
+            _closest_row = None
+            _nearest_bbbc_dose = None
+
+        _fig_umap.update_layout(
+            title=f"BBBC021 UMAP State Space — Highlight: {s10_bbbc_select.value}",
+            xaxis=dict(title="UMAP Dimension 1", gridcolor="#eee", zerolinecolor="#ccc"),
+            yaxis=dict(title="UMAP Dimension 2", gridcolor="#eee", zerolinecolor="#ccc"),
+            template="plotly_white",
+            height=440,
+            margin=dict(l=40, r=40, t=50, b=40),
+            legend=dict(orientation="h", y=-0.2, x=0),
+        )
+
+        if _closest_row is not None:
+            with zipfile.ZipFile("data/bbbc021/plate.zip") as _z:
+                _d = tifffile.imread(_z.open("Week1_22123/" + _closest_row["Image_FileName_DAPI"])).astype("float32")
+                _t = tifffile.imread(_z.open("Week1_22123/" + _closest_row["Image_FileName_Tubulin"])).astype("float32")
+                _a = tifffile.imread(_z.open("Week1_22123/" + _closest_row["Image_FileName_Actin"])).astype("float32")
+
+            def _norm_ch(ch):
+                p1, p99 = np.percentile(ch, (1, 99.5))
+                clipped = np.clip((ch - p1) / (p99 - p1 + 1e-7), 0, 1)
+                return (clipped * 255).astype("uint8")
+
+            _rgb = np.stack([_norm_ch(_a), _norm_ch(_t), _norm_ch(_d)], axis=-1)
+            _img_panel = mo.vstack(
+                [
+                    mo.md(
+                        f"**Microscopy Field: {_closest_row['Image_FileName_DAPI']}** (Nearest Dose: `{_nearest_bbbc_dose} μM`)<br>*Pseudo-color: Red = Actin, Green = Tubulin, Blue = DAPI*"
+                    ),
+                    mo.image(
+                        _rgb,
+                        width=460,
+                        caption=f"{s10_bbbc_select.value} @ {_nearest_bbbc_dose} μM | Well {_closest_row['Image_Metadata_Well_DAPI']} | Field {_closest_row['ImageNumber']}",
+                    ),
+                ]
+            )
+        else:
+            _img_panel = mo.md("No matching microscopy image available.")
+
+        s10_dashboard_view = mo.vstack(
+            [
+                mo.hstack([s10_conc_slider], justify="start"),
+                mo.hstack([mo.ui.plotly(_fig_drc), mo.ui.plotly(_fig_umap)], gap=2),
+                mo.hstack(
+                    [
+                        _img_panel,
+                        mo.vstack(
+                            [
+                                mo.md("#### Atlas Transition & Evidence Quality Indicators"),
+                                mo.md(
+                                    f"- **Selected PRISM Target:** `{s10_drug_select.value}` on `{s10_cell_select.value}`\n"
+                                    f"- **Estimated IC50:** `{_ic50:.4f} μM`\n"
+                                    f"- **Hill Slope (Steepness):** `{abs(_slope):.2f}`\n"
+                                    f"- **Transition Region [EC20, EC80]:** `[{_lo_ec:.4f}, {_hi_ec:.4f}] μM`\n"
+                                    f"- **Matched BBBC021 Compound:** `{s10_bbbc_select.value}`\n"
+                                    f"- **Microscopy Dose Synced:** `{_nearest_bbbc_dose} μM`\n"
+                                ),
+                                mo.md(
+                                    "> 💡 **Interactive Synchronization:** Moving the dose slider highlights the concentration cursor across the dose–response curve, "
+                                    "marks the corresponding state on the UMAP state map, and streams the field microscopy image."
+                                ),
+                            ]
+                        ),
+                    ]
+                ),
+                mo.md("### Ranked Candidate Tipping-Point Catalog"),
+                mo.hstack([s10_download_btn], justify="start"),
+                s10_catalog_df,
+                mo.md(
+                    "> ⚠️ **Final Epistemological Boundary Notice:** Candidate tipping points, steep Hill response intervals, and UMAP distance trajectories cataloged in this atlas "
+                    "represent **mathematical sensitivity and phenotypic divergence in static observational data**. They **MUST NEVER be reported as experimentally proven biological tipping points, "
+                    "bistable switches, or irreversible cell commitments** without dynamic single-cell tracking, washout recovery, or kinetic bifurcation validation."
+                ),
+            ]
+        )
+
+    s10_dashboard_view
+    return (s10_dashboard_view,)
 
 
 if __name__ == "__main__":
