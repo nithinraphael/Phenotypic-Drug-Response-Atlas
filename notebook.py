@@ -6,7 +6,11 @@
 #     "numpy",
 #     "plotly",
 #     "polars",
+#     "scipy",
+#     "tabpfn",
+#     "thunor",
 #     "tifffile",
+#     "torch",
 # ]
 # ///
 
@@ -18,15 +22,38 @@ app = marimo.App(width="medium")
 
 @app.cell
 def _():
+    import os
     import zipfile
     from expression import Error, Ok, Result
     import marimo as mo
     import numpy as np
     import plotly.graph_objects as go
     import polars as pl
+    import scipy.stats as stats
     import tifffile
+    import torch
+    from tabpfn import TabPFNRegressor
+    from tabpfn.browser_auth import get_cached_token
+    from thunor.curve_fit import HillCurveNull, fit_drc
 
-    return Error, Ok, Result, go, mo, np, pl, tifffile, zipfile
+    return (
+        Error,
+        HillCurveNull,
+        Ok,
+        Result,
+        TabPFNRegressor,
+        fit_drc,
+        get_cached_token,
+        go,
+        mo,
+        np,
+        os,
+        pl,
+        stats,
+        tifffile,
+        torch,
+        zipfile,
+    )
 
 
 @app.cell
@@ -348,16 +375,33 @@ def _(Error, Ok, Result, mo, pl, prism, prism_cell_select, prism_drug_select):
 
 
 @app.cell
-def _(go, mo, np, prism_cell_select, prism_data_result, prism_drug_select):
+def _(
+    HillCurveNull,
+    fit_drc,
+    go,
+    mo,
+    np,
+    pl,
+    prism_cell_select,
+    prism_data_result,
+    prism_drug_select,
+):
     if prism_data_result.is_error():
         prism_view = mo.md(f"⚠️ **PRISM Data Warning:** {prism_data_result.error}")
     else:
         measurements, curves_df = prism_data_result.ok
         fig = go.Figure()
+        stats_rows = []
 
         screens = measurements["screen_id"].unique().to_list()
+        doses_all = measurements["dose"].to_list()
+        min_d, max_d = min(doses_all), max(doses_all)
+        grid_x = np.logspace(np.log10(min_d * 0.8), np.log10(max_d * 1.2), 120)
+
         for screen_id in screens:
             sub = measurements.filter(measurements["screen_id"] == screen_id)
+            doses = sub["dose"].to_numpy()
+            viabs = sub["viability"].to_numpy()
             custom = np.stack(
                 [
                     sub["response"].to_numpy(),
@@ -368,8 +412,8 @@ def _(go, mo, np, prism_cell_select, prism_data_result, prism_drug_select):
             )
             fig.add_trace(
                 go.Scatter(
-                    x=sub["dose"].to_list(),
-                    y=sub["viability"].to_list(),
+                    x=doses,
+                    y=viabs,
                     mode="markers",
                     name=f"Replicates ({screen_id})",
                     customdata=custom,
@@ -382,33 +426,176 @@ def _(go, mo, np, prism_cell_select, prism_data_result, prism_drug_select):
                 )
             )
 
-        doses = measurements["dose"].to_list()
-        if doses:
-            min_d, max_d = min(doses), max(doses)
-            grid_x = np.logspace(np.log10(min_d * 0.8), np.log10(max_d * 1.2), 120)
-            for r in curves_df.iter_rows(named=True):
-                ec50, slope = r["ec50"], r["slope"]
-                upper, lower = r["upper_limit"], r["lower_limit"]
-                if ec50 and slope and ec50 > 0:
-                    grid_y = lower + (upper - lower) / (1.0 + (grid_x / ec50) ** slope)
-                    r2_str = f"{r['r2']:.2f}" if r["r2"] is not None else "N/A"
+            pub_sub = curves_df.filter(pl.col("screen_id") == screen_id)
+            pub_row = pub_sub.to_dicts()[0] if pub_sub.height > 0 else None
+            pub_valid = (
+                pub_row is not None
+                and pub_row.get("ec50") is not None
+                and pub_row["ec50"] > 0
+                and pub_row.get("slope") is not None
+                and pub_row["slope"] > 0
+                and pub_row.get("r2") is not None
+                and pub_row["r2"] > 0
+            )
+
+            # 1. Published PRISM Curve
+            if pub_valid:
+                pec50, pslope = pub_row["ec50"], pub_row["slope"]
+                pupper, plower = pub_row["upper_limit"], pub_row["lower_limit"]
+                pub_grid_y = plower + (pupper - plower) / (1.0 + (grid_x / pec50) ** pslope)
+                fig.add_trace(
+                    go.Scatter(
+                        x=grid_x,
+                        y=pub_grid_y,
+                        mode="lines",
+                        line=dict(width=2.5),
+                        name=f"Published ({screen_id}) EC50={pec50:.3g} μM R²={pub_row['r2']:.2f}",
+                    )
+                )
+                p_steep0 = pec50 * (0.25 ** (1.0 / pslope))
+                p_steep1 = pec50 * (4.0 ** (1.0 / pslope))
+                fig.add_vrect(
+                    x0=p_steep0,
+                    x1=p_steep1,
+                    fillcolor="rgba(255, 140, 0, 0.12)",
+                    layer="below",
+                    line_width=1,
+                    line_dash="dot",
+                    line_color="darkorange",
+                    annotation_text=f"Steep Window ({screen_id})",
+                    annotation_position="top left",
+                )
+                y_pub_pred = plower + (pupper - plower) / (1.0 + (doses / pec50) ** pslope)
+                rmse_pub = float(np.sqrt(np.mean((viabs - y_pub_pred) ** 2)))
+                stats_rows.append(
+                    {
+                        "screen_id": screen_id,
+                        "model": "Published PRISM",
+                        "status": "Valid (Reused)",
+                        "ec50_uM": float(pec50),
+                        "ic50_uM": str(pub_row["ic50"]) if pub_row["ic50"] is not None else "N/A",
+                        "hill_slope": float(pslope),
+                        "e0_top": float(pupper),
+                        "emax_bottom": float(plower),
+                        "max_inhibition_pct": float(max(0.0, (1.0 - plower) * 100)),
+                        "r2": float(pub_row["r2"]),
+                        "rmse": rmse_pub,
+                        "steep_window_uM": f"[{p_steep0:.3g}, {p_steep1:.3g}]",
+                    }
+                )
+            elif pub_row:
+                stats_rows.append(
+                    {
+                        "screen_id": screen_id,
+                        "model": "Published PRISM",
+                        "status": f"Invalid (R²={pub_row.get('r2')})",
+                        "ec50_uM": float(pub_row["ec50"]) if pub_row.get("ec50") else None,
+                        "ic50_uM": "N/A",
+                        "hill_slope": float(pub_row["slope"]) if pub_row.get("slope") else None,
+                        "e0_top": float(pub_row["upper_limit"]) if pub_row.get("upper_limit") else None,
+                        "emax_bottom": float(pub_row["lower_limit"]) if pub_row.get("lower_limit") else None,
+                        "max_inhibition_pct": None,
+                        "r2": float(pub_row["r2"]) if pub_row.get("r2") else None,
+                        "rmse": None,
+                        "steep_window_uM": "N/A",
+                    }
+                )
+
+            # 2. Thunor 4-Parameter Logistic Refit
+            if len(np.unique(doses)) >= 4:
+                fit = fit_drc(doses, viabs)
+                if not isinstance(fit, HillCurveNull) and fit.ec50 and fit.hill_slope and fit.hill_slope > 0:
+                    refit_y = fit.fit(grid_x)
                     fig.add_trace(
                         go.Scatter(
                             x=grid_x,
-                            y=grid_y,
+                            y=refit_y,
                             mode="lines",
-                            name=f"Fit ({r['screen_id']}) EC50={ec50:.3g} μM R²={r2_str}",
+                            line=dict(dash="dash" if pub_valid else "solid", width=2),
+                            name=f"Thunor Refit ({screen_id}) EC50={fit.ec50:.3g} μM",
                         )
                     )
+                    y_pred = fit.fit(doses)
+                    ss_res = np.sum((viabs - y_pred) ** 2)
+                    ss_tot = np.sum((viabs - np.mean(viabs)) ** 2)
+                    r2_refit = float(1.0 - ss_res / ss_tot) if ss_tot > 0 else 0.0
+                    rmse_refit = float(np.sqrt(np.mean((viabs - y_pred) ** 2)))
+                    ic50_val = fit.ic(50) if fit.emax < 0.5 < fit.e0 else None
+                    t_steep0 = fit.ec50 * (0.25 ** (1.0 / fit.hill_slope))
+                    t_steep1 = fit.ec50 * (4.0 ** (1.0 / fit.hill_slope))
+                    if not pub_valid:
+                        fig.add_vrect(
+                            x0=t_steep0,
+                            x1=t_steep1,
+                            fillcolor="rgba(255, 140, 0, 0.12)",
+                            layer="below",
+                            line_width=1,
+                            line_dash="dot",
+                            line_color="darkorange",
+                            annotation_text=f"Steep Window ({screen_id})",
+                            annotation_position="top left",
+                        )
+                    stats_rows.append(
+                        {
+                            "screen_id": screen_id,
+                            "model": "Thunor 4PL Fit",
+                            "status": "Refitted",
+                            "ec50_uM": float(fit.ec50),
+                            "ic50_uM": f"{ic50_val:.4g}" if ic50_val is not None else "> max dose",
+                            "hill_slope": float(fit.hill_slope),
+                            "e0_top": float(fit.e0),
+                            "emax_bottom": float(fit.emax),
+                            "max_inhibition_pct": float(max(0.0, (1.0 - fit.emax) * 100)),
+                            "r2": r2_refit,
+                            "rmse": rmse_refit,
+                            "steep_window_uM": f"[{t_steep0:.3g}, {t_steep1:.3g}]",
+                        }
+                    )
+                else:
+                    stats_rows.append(
+                        {
+                            "screen_id": screen_id,
+                            "model": "Thunor 4PL Fit",
+                            "status": "Rejected (Flat/Non-sigmoidal)",
+                            "ec50_uM": None,
+                            "ic50_uM": "N/A",
+                            "hill_slope": None,
+                            "e0_top": None,
+                            "emax_bottom": None,
+                            "max_inhibition_pct": None,
+                            "r2": None,
+                            "rmse": None,
+                            "steep_window_uM": "N/A",
+                        }
+                    )
+            else:
+                stats_rows.append(
+                    {
+                        "screen_id": screen_id,
+                        "model": "Thunor 4PL Fit",
+                        "status": "Insufficient data (<4 doses)",
+                        "ec50_uM": None,
+                        "ic50_uM": "N/A",
+                        "hill_slope": None,
+                        "e0_top": None,
+                        "emax_bottom": None,
+                        "max_inhibition_pct": None,
+                        "r2": None,
+                        "rmse": None,
+                        "steep_window_uM": "N/A",
+                    }
+                )
 
         fig.update_xaxes(type="log", title="Dose (μM, log scale)")
         fig.update_yaxes(title="Relative Viability (2^response)")
         fig.update_layout(
-            title=f"Dose–Response: {prism_drug_select.value} in {prism_cell_select.value}",
+            title=f"Dose–Response Modeling: {prism_drug_select.value} in {prism_cell_select.value}",
             template="plotly_white",
-            height=420,
+            height=430,
             margin=dict(l=40, r=40, t=50, b=40),
         )
+
+        stats_df = pl.DataFrame(stats_rows)
 
         prism_meta_cols = [
             "name",
@@ -426,24 +613,15 @@ def _(go, mo, np, prism_cell_select, prism_data_result, prism_drug_select):
         prism_view = mo.vstack(
             [
                 mo.ui.plotly(fig),
+                mo.md(
+                    "> ⚠️ **Scientific Interpretation Disclaimer:** Highlighted steep response regions represent the mathematical dynamic transition window (EC20–EC80) of the Hill fit, and must never be confused with proven discrete biological tipping points."
+                ),
+                mo.md("#### Dose–Response Fit Statistics (Published vs Refitted)"),
+                stats_df,
                 mo.accordion(
                     {
                         "Drug Metadata": meta_sub,
-                        "Fitted Curve Parameters": curves_df.select(
-                            [
-                                "screen_id",
-                                "ec50",
-                                "ic50",
-                                "slope",
-                                "auc",
-                                "r2",
-                                "lower_limit",
-                                "upper_limit",
-                            ]
-                        )
-                        if curves_df.height > 0
-                        else mo.md("No fitted curves recorded."),
-                        f"Response Measurements ({measurements.height} replicates)": measurements.select(
+                        f"Response Replicate Measurements ({measurements.height} points)": measurements.select(
                             [
                                 "dose",
                                 "viability",
@@ -459,29 +637,236 @@ def _(go, mo, np, prism_cell_select, prism_data_result, prism_drug_select):
         )
 
     prism_view
-    return (
-        curves_df,
-        custom,
-        doses,
-        ec50,
-        fig,
-        grid_x,
-        grid_y,
-        lower,
-        max_d,
-        measurements,
-        meta_sub,
-        min_d,
-        prism_meta_cols,
-        prism_view,
-        r,
-        r2_str,
-        screen_id,
-        screens,
-        slope,
-        sub,
-        upper,
+    return (prism_view,)
+
+
+@app.cell
+def _(mo, torch):
+    cuda_avail = torch.cuda.is_available()
+    dev_name = torch.cuda.get_device_name(0) if cuda_avail else "CPU"
+    vram_gb = (
+        round(torch.cuda.get_device_properties(0).total_memory / (1024**3), 2)
+        if cuda_avail
+        else 0.0
     )
+
+    token_input = mo.ui.text(
+        label="PriorLabs API Key / TABPFN_TOKEN",
+        placeholder="Enter key from https://ux.priorlabs.ai/account (if not cached)...",
+    )
+    run_ai_btn = mo.ui.run_button(label="Run AI Prediction")
+
+    hw_info = f"**Hardware:** {dev_name} ({vram_gb} GB VRAM)" if cuda_avail else "**Hardware:** CPU"
+
+    mo.vstack(
+        [
+            mo.md("### Step 5 — Pretrained AI Drug-Response Prediction (TabPFN-3.5-Fast)"),
+            mo.md(f"{hw_info} | **Model:** `TabPFN-3.5-Fast` (In-Context Regressor)"),
+            mo.hstack([token_input, run_ai_btn], justify="start", gap=2),
+        ]
+    )
+    return cuda_avail, dev_name, hw_info, run_ai_btn, token_input, vram_gb
+
+
+@app.cell
+def _(
+    Error,
+    Ok,
+    Result,
+    TabPFNRegressor,
+    get_cached_token,
+    go,
+    mo,
+    np,
+    os,
+    pl,
+    prism_cell_select,
+    prism_data_result,
+    prism_drug_select,
+    run_ai_btn,
+    token_input,
+    torch,
+):
+    if not run_ai_btn.value:
+        ai_output = mo.md(
+            "_Click **Run AI Prediction** above to perform in-context regression on the selected drug and cell line using pretrained TabPFN-3.5-Fast._"
+        )
+    elif prism_data_result.is_error():
+        ai_output = mo.md(f"⚠️ **Cannot run AI Prediction:** {prism_data_result.error}")
+    else:
+        ai_measurements, ai_curves_df = prism_data_result.ok
+
+        token = token_input.value.strip() or os.environ.get("TABPFN_TOKEN") or get_cached_token()
+        doses_raw = ai_measurements["dose"].to_numpy()
+        viabs_raw = ai_measurements["viability"].to_numpy()
+
+        if ai_measurements.height == 0:
+            val_res = Error("No PRISM measurements available for selected drug and cell line.")
+        elif len(np.unique(doses_raw)) < 3:
+            val_res = Error("Insufficient distinct concentrations (< 3) to fit TabPFN regressor.")
+        elif not np.all(np.isfinite(doses_raw)) or not np.all(np.isfinite(viabs_raw)):
+            val_res = Error("Measurements contain non-finite values (NaN or Inf).")
+        elif not token:
+            val_res = Error(
+                "TabPFN-3.5-Fast requires a one-time PriorLabs API key / license acceptance to download model weights. "
+                "Please visit https://ux.priorlabs.ai/login?hf_repo_id=tabpfn_3_5 to accept the license, copy your API key "
+                "from https://ux.priorlabs.ai/account, paste it in the field above or set export TABPFN_TOKEN='...', then click Run AI Prediction."
+            )
+        else:
+            os.environ["TABPFN_TOKEN"] = token
+            os.environ["TABPFN_NO_BROWSER"] = "1"
+            device = "cuda" if torch.cuda.is_available() else "cpu"
+            if device == "cuda":
+                free_vram_gb = torch.cuda.mem_get_info()[0] / (1024**3)
+                if free_vram_gb < 1.0:
+                    device = "cpu"
+            val_res = Ok(device)
+
+        if val_res.is_error():
+            ai_output = mo.md(f"⚠️ **AI Prediction Blocked:** {val_res.error}")
+        else:
+            selected_device = val_res.ok
+
+            unique_doses = np.unique(doses_raw)
+            train_mask = np.zeros(len(doses_raw), dtype=bool)
+            test_mask = np.zeros(len(doses_raw), dtype=bool)
+
+            for d in unique_doses:
+                idx = np.where(doses_raw == d)[0]
+                if len(idx) > 1:
+                    train_mask[idx[:-1]] = True
+                    test_mask[idx[-1]] = True
+                else:
+                    train_mask[idx] = True
+
+            X_all = np.column_stack([np.log10(doses_raw), doses_raw])
+            X_train, y_train = X_all[train_mask], viabs_raw[train_mask]
+            X_test, y_test = X_all[test_mask], viabs_raw[test_mask]
+
+            ai_min_d, ai_max_d = min(doses_raw), max(doses_raw)
+            grid_doses = np.logspace(np.log10(ai_min_d * 0.8), np.log10(ai_max_d * 1.2), 100)
+            X_grid = np.column_stack([np.log10(grid_doses), grid_doses])
+
+            @mo.cache
+            def run_tabpfn_fit_predict(X_tr, y_tr, X_te, X_gr, dev):
+                reg = TabPFNRegressor(
+                    model_path="v3.5-fast",
+                    device=dev,
+                    fit_mode="low_memory",
+                    inference_precision="autocast" if dev == "cuda" else "auto",
+                )
+                reg.fit(X_tr, y_tr)
+                te_pred = reg.predict(X_te) if len(X_te) > 0 else np.array([])
+                gr_pred = reg.predict(X_gr)
+                return te_pred, gr_pred
+
+            y_test_pred, y_grid_pred = run_tabpfn_fit_predict(
+                X_train, y_train, X_test, X_grid, selected_device
+            )
+
+            eval_rows = []
+            if len(y_test) > 0:
+                test_rmse = float(np.sqrt(np.mean((y_test - y_test_pred) ** 2)))
+                test_mae = float(np.mean(np.abs(y_test - y_test_pred)))
+                ai_ss_res = np.sum((y_test - y_test_pred) ** 2)
+                ai_ss_tot = np.sum((y_test - np.mean(y_test)) ** 2)
+                test_r2 = float(1.0 - ai_ss_res / ai_ss_tot) if ai_ss_tot > 0 else 0.0
+                eval_rows.append(
+                    {
+                        "metric": "Held-Out Test Set",
+                        "samples": len(y_test),
+                        "rmse": test_rmse,
+                        "mae": test_mae,
+                        "r2": test_r2,
+                        "device_used": selected_device,
+                    }
+                )
+            eval_df = (
+                pl.DataFrame(eval_rows)
+                if eval_rows
+                else pl.DataFrame(
+                    {"info": ["All measurements used for training (single replicate per dose)."]}
+                )
+            )
+
+            fig_ai = go.Figure()
+
+            fig_ai.add_trace(
+                go.Scatter(
+                    x=doses_raw[train_mask],
+                    y=viabs_raw[train_mask],
+                    mode="markers",
+                    name="Train Replicates",
+                    marker=dict(color="steelblue", size=7),
+                )
+            )
+            if np.sum(test_mask) > 0:
+                fig_ai.add_trace(
+                    go.Scatter(
+                        x=doses_raw[test_mask],
+                        y=viabs_raw[test_mask],
+                        mode="markers",
+                        name="Held-Out Test Actual",
+                        marker=dict(symbol="diamond", color="darkblue", size=8),
+                    )
+                )
+                fig_ai.add_trace(
+                    go.Scatter(
+                        x=doses_raw[test_mask],
+                        y=y_test_pred,
+                        mode="markers",
+                        name="Held-Out Test Predicted",
+                        marker=dict(symbol="x", color="purple", size=9),
+                    )
+                )
+
+            for r in ai_curves_df.iter_rows(named=True):
+                ec50, slope = r["ec50"], r["slope"]
+                upper, lower = r["upper_limit"], r["lower_limit"]
+                if ec50 and slope and ec50 > 0 and r["r2"] and r["r2"] > 0:
+                    hill_y = lower + (upper - lower) / (1.0 + (grid_doses / ec50) ** slope)
+                    fig_ai.add_trace(
+                        go.Scatter(
+                            x=grid_doses,
+                            y=hill_y,
+                            mode="lines",
+                            name=f"Hill Fit ({r['screen_id']})",
+                            line=dict(color="orange", width=1.8),
+                        )
+                    )
+
+            fig_ai.add_trace(
+                go.Scatter(
+                    x=grid_doses,
+                    y=y_grid_pred,
+                    mode="lines",
+                    name="TabPFN-3.5 AI Prediction (Interpolated)",
+                    line=dict(color="purple", width=2.5, dash="dot"),
+                )
+            )
+
+            fig_ai.update_xaxes(type="log", title="Dose (μM, log scale)")
+            fig_ai.update_yaxes(title="Relative Viability (2^response)")
+            fig_ai.update_layout(
+                title=f"AI Prediction vs Experimental & Hill Fit: {prism_drug_select.value} in {prism_cell_select.value}",
+                template="plotly_white",
+                height=450,
+                margin=dict(l=40, r=40, t=50, b=40),
+            )
+
+            ai_output = mo.vstack(
+                [
+                    mo.ui.plotly(fig_ai),
+                    mo.md(
+                        "> ⚠️ **AI Prediction Disclaimer:** TabPFN-3.5-Fast predictions represent in-context data-driven function approximations / interpolations based on observed PRISM samples, and must not be claimed to establish discrete biological tipping points or mechanistic causal transitions."
+                    ),
+                    mo.md("#### TabPFN-3.5 Held-Out Generalization Error"),
+                    eval_df,
+                ]
+            )
+
+    ai_output
+    return (ai_output,)
 
 
 @app.cell
