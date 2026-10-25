@@ -26,7 +26,7 @@ prism = {
     "secondary-screen-pooling-info.csv": "pooling.csv",
 }
 
-for source, target in prism.items():
+for source, target in prism.items():c
     url = next(f["download_url"] for f in files if f["name"] == source)
     download(url, root / "prism" / target)
 
