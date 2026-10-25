@@ -169,33 +169,44 @@ The following publication-quality figures have been exported to `figures/` in bo
 ## 11. Independent Cross-Dataset Experimental Validation (GDSC2 & CTRPv2)
 
 To rigorously test whether candidate steep transitions represent reproducible biological responses rather than assay artifacts of the PRISM pooled platform, we independently validated candidates against two external pharmacogenomic screening collections:
-- **GDSC2 (Genomics of Drug Sensitivity in Cancer v2):** 72-hour CellTiter-Glo ATP viability screen across 809 cancer cell lines (Sanger Institute).
+- **GDSC2 (Genomics of Drug Sensitivity in Cancer v2):** 72-hour CellTiter-Glo ATP viability screen across 809 cancer cell lines (Wellcome Sanger Institute).
 - **CTRPv2 (Cancer Therapeutics Response Portal v2):** 72-hour CellTiter-Glo ATP viability screen across 845 cancer cell lines (Broad Institute / NCI).
 
-### Cross-Dataset Potency Correlation
-Across **3,835 three-way matched (PRISM $\times$ GDSC2 $\times$ CTRPv2)** experimental profiles:
-- PRISM vs. GDSC2 $\log_{10}(EC_{50})$ Pearson correlation: $r = 0.225$ ($p = 4.37 \times 10^{-45}$).
-- PRISM vs. CTRPv2 $\log_{10}(EC_{50})$ Pearson correlation: $r = 0.201$ ($p = 4.37 \times 10^{-36}$).
-- GDSC2 vs. CTRPv2 $\log_{10}(EC_{50})$ Pearson correlation: $r = 0.422$ ($p = 8.72 \times 10^{-166}$).
+### Cross-Dataset Potency Correlation & Sample Harmonization
+All cell lines were standardized using official DepMap Model IDs (`ACH-xxxxxx`) via Cellosaurus cross-references (`CVCL_xxxx` to DepMap and Sanger Model IDs `SIDMxxxxx` to DepMap), achieving >99.7% mapping fidelity. All drug concentrations were normalized to log-transformed micromolar units ($\log_{10}(\mu\text{M})$).
 
-This concordance is consistent with benchmark pharmacogenomic meta-analyses (e.g. Haibe-Kains et al., *Nature* 2013; Safikhani et al., *Nature* 2016), reflecting common biological signal despite differences in assay technology (pooled barcode sequencing vs luminescence) and assay duration.
+- **PRISM $\text{EC}_{50}$ vs. GDSC2 $\text{IC}_{50}$ ($N = 12,424$ matched pairs):**
+  - Pearson correlation: $r = 0.5998$ (95% CI: $[0.5884, 0.6109]$, $p < 10^{-300}$).
+  - Spearman rank correlation: $\rho = 0.6002$ ($p < 10^{-300}$).
+- **PRISM $\text{EC}_{50}$ vs. CTRPv2 $\text{EC}_{50}$ ($N = 7,329$ matched pairs):**
+  - Pearson correlation: $r = 0.3926$ (95% CI: $[0.3730, 0.4117]$, $p = 1.30 \times 10^{-268}$).
+  - Spearman rank correlation: $\rho = 0.4022$ ($p = 4.57 \times 10^{-283}$).
+- **Three-Way Matched Dataset (PRISM $\times$ GDSC2 $\times$ CTRPv2):** $N = 5,572$ experimentally verified compound–cell-line pairs.
 
-### Systematic Replicate Stratification
-We classified 10 representative candidate transitions into three epistemological categories:
+Across individual chemical classes, cell-line-specific dynamic ranges are narrower (within 1–2 orders of magnitude), yielding within-drug correlations between $r = 0.17$ and $r = 0.38$ (e.g., Bortezomib in GDSC2 $r = 0.356, N=495$; Docetaxel in GDSC2 $r = 0.191, N=727$), consistent with standard inter-consortium benchmarks (Haibe-Kains et al., *Nature* 2013).
 
-| Category | Candidate Pair | PRISM $EC_{50}$ (120h) | GDSC2 $IC_{50}$ (72h) | CTRPv2 $EC_{50}$ (72h) | CTRPv2 Slope ($n_H$) | Scientific Verdict |
-| :--- | :--- | :---: | :---: | :---: | :---: | :--- |
-| **Replicated** | Bortezomib on RKO (`ACH-000943`) | 0.0288 µM | 0.0044 µM | 0.0111 µM | 3.65 ($R^2=0.98$) | **High Concordance:** Sub-30 nM proteasome arrest and ultrasensitive slope confirmed across all 3 datasets. |
-| **Replicated** | Bortezomib on A375 (`ACH-000219`) | 0.0198 µM | 0.0047 µM | 0.0271 µM | 4.22 ($R^2=0.96$) | **High Concordance:** Low nanomolar potency and high steepness confirmed independently. |
-| **Replicated** | Docetaxel on KYSE-270 (`ACH-000873`) | 0.0028 µM | 0.0097 µM | 0.0132 µM | 1.89 ($R^2=0.98$) | **High Concordance:** Sub-15 nM microtubule arrest verified with high fit quality. |
-| **Replicated** | Paclitaxel on MKN-1 (`ACH-000684`) | 0.0049 µM | 0.0039 µM | 0.0048 µM | 2.24 ($R^2=0.85$) | **High Concordance:** Exact potency match ($4.8$ nM) between PRISM and CTRPv2. |
-| **Replicated** | Cytarabine on 253J-BV (`ACH-000030`) | 0.0204 µM | 0.0185 µM | 0.0018 µM | 1.19 ($R^2=0.77$) | **Moderate Concordance:** Confirmed nanomolar metabolic arrest in all assays. |
-| **Replicated** | Gemcitabine on PSN-1 (`ACH-000320`) | 0.0062 µM | 0.0050 µM | 0.0120 µM | 5.00 ($R^2=0.91$) | **High Concordance:** Pancreatic cancer line sensitivity verified within 5–12 nM. |
-| **Conflicting** | Paclitaxel on NUGC-3 (`ACH-000911`) | 0.0078 µM | 0.0770 µM | 6.0145 µM | 5.00 ($R^2=0.89$) | **Negative Finding:** CTRPv2 exhibits 770-fold resistance shift, indicating assay-dependent efflux activation or seeding divergence. |
-| **Conflicting** | Docetaxel on KU-19-19 (`ACH-000486`) | 0.0016 µM | 0.0041 µM | 1.1277 µM | 5.00 ($R^2=0.31$) | **Negative Finding:** CTRPv2 replicate failed curve fit QC ($R^2=0.31$), despite GDSC2 confirming 4 nM sensitivity. |
-| **Untestable** | Floxuridine on NCI-H2110 (`ACH-000929`) | 0.0383 µM | N/A | N/A | N/A | **Untestable:** Compound omitted from GDSC2 and CTRPv2 monotherapy panels (5-FU tested as analog). |
-| **Untestable** | XL888 on Detroit 562 (`ACH-000207`) | 0.1315 µM | N/A | N/A | N/A | **Untestable:** Proprietary HSP90 inhibitor unique to PRISM screen. |
+### Systematic Replicate Stratification & Source-Audited Candidates
+We audited 10 representative candidate transitions against primary source records:
 
-### Temporal Exposure Kinetics & Epistemological Boundaries
-1. **The 120h vs. 72h Temporal Shift:** For cell-cycle-dependent agents (Bortezomib, Docetaxel, Paclitaxel), PRISM 120-hour viability systematically yields $2\times$ to $5\times$ lower $EC_{50}$ values than 72-hour GDSC2/CTRPv2 assays. Over a 5-day incubation period, slow irreversible binding and accumulated mitotic arrest reduce the population survival threshold compared to a 3-day window.
-2. **Epistemological Guardrail:** Replicated $IC_{50}$ values and steep Hill slopes ($n_H > 2.0$) across multiple screening consortia prove that a drug induces a sharp, robust cytotoxic population collapse at specific nanomolar thresholds. **However, static population viability assays cannot demonstrate single-cell bistability, hysteresis, or non-recoverable commitment switches.** Causal validation of genuine biological tipping points necessitates dynamic single-cell live-cell tracking, drug washout assays, and multi-omics bifurcation analysis.
+| Category | Compound | Cell Line | DepMap ID | PRISM $EC_{50}$ (120h) | PRISM Slope ($n_H$) | GDSC2 $IC_{50}$ (72h) | CTRPv2 $EC_{50}$ (72h) | CTRPv2 Slope ($n_H$) | Scientific Verdict |
+| :--- | :--- | :--- | :--- | :---: | :---: | :---: | :---: | :---: | :--- |
+| **Replicated** | Bortezomib | RKO | `ACH-000943` | 0.0288 µM | 14.00 | 0.0044 µM | 0.0111 µM | 3.65 ($R^2=0.98$) | **High Concordance:** Sub-30 nM proteasome arrest and ultrasensitive slope confirmed independently across all 3 consortia. |
+| **Replicated** | Bortezomib | A375 | `ACH-000219` | 0.0265 µM | 6.67 | 0.0047 µM | 0.0271 µM | 4.22 ($R^2=0.96$) | **High Concordance:** Nanomolar potency (4.7–27.1 nM) and steep slope ($n_H > 4.0$) confirmed independently. |
+| **Replicated Potency** | Docetaxel | MDA-MB-231 | `ACH-000768` | 0.0378 µM | 4.06 | 0.0116 µM | 0.0094 µM | 1.25 ($R^2=0.99$) | **Potency Concordant / Slope Discordant:** Low-nanomolar potency (9.4–37.8 nM) confirmed, but CTRPv2 displays standard mass-action slope ($n_H = 1.25$). |
+| **Replicated Potency** | Docetaxel | KYSE-270 | `ACH-000873` | 0.0347 µM | 18.15 | 0.0097 µM | 0.0132 µM | 1.89 ($R^2=0.98$) | **Moderate Concordance:** Low-nanomolar potency (9.7–34.7 nM) confirmed in all 3 panels; CTRPv2 slope is moderately steep. |
+| **Replicated Potency** | Paclitaxel | A375 | `ACH-000219` | 0.0474 µM | 3.45 | 0.0147 µM | 0.0069 µM | 5.00 ($R^2=0.44$) | **GDSC2 Replicated / CTRP QC Fail:** GDSC2 confirms 14.7 nM potency; CTRPv2 fit failed QC ($R^2 = 0.443$) with an optimizer boundary clamp ($n_H = 5.0$). |
+| **Discordant** | Paclitaxel | MKN1 | `ACH-000351` | 0.0090 µM | 3.25 | 0.1955 µM | 0.0048 µM | 2.24 ($R^2=0.31$) | **Discordant / Fit QC Failure:** GDSC2 exhibits a 22-fold shift towards resistance ($195.5$ nM); CTRPv2 curve fit failed QC ($R^2 = 0.306$). |
+| **Conflicting** | Paclitaxel | NUGC-3 | `ACH-000911` | 0.0084 µM | 17.48 | 0.0770 µM | 6.0145 µM | 5.00 ($R^2=0.89$) | **Negative Finding:** CTRPv2 indicates 715-fold insensitivity ($6.01\ \mu\text{M}$ vs PRISM $8.41\text{ nM}$), demonstrating assay or subclone divergence. |
+| **Conflicting** | Docetaxel | KU-19-19 | `ACH-000486` | 0.0093 µM | 19.31 | 0.0041 µM | 1.1277 µM | 5.00 ($R^2=0.31$) | **Negative Finding:** GDSC2 corroborates 4.07 nM potency, but CTRPv2 failed curve fit QC ($R^2 = 0.314$). |
+| **Untestable** | Floxuridine | NCI-H2110 | `ACH-000929` | 0.0383 µM | 13.46 | N/A | N/A | N/A | **Untestable:** Floxuridine monotherapy was omitted from GDSC2 and CTRPv2 standard libraries (5-FU was tested as an analog). |
+| **Untestable** | XL888 | Detroit 562 | `ACH-000207` | 0.1315 µM | 19.91 | N/A | N/A | N/A | **Untestable:** Proprietary HSP90 inhibitor screened exclusively in PRISM repurposing panel. |
+
+*Note on External Hill Slopes:* GDSC2 published curve fits provide NLME parameters (`LN_IC50`, `AUC`, `RMSE`), but do not publish Hill slope coefficients. CTRPv2 fitted parameters cap Hill slopes at $|n_H| = 5.0$; values at 5.0 represent optimization boundary clamps rather than biological estimates.
+
+### Methodological Drivers of Cross-Dataset Variation & Epistemological Boundaries
+1. **Multi-Factor Assay Variation:** Apparent potency shifts between PRISM and 72-hour assays (GDSC2 / CTRPv2) cannot be attributed solely to exposure duration. Rather, they reflect multiple confounding technical and biological factors:
+   - **Detection Modality:** PRISM measures relative cell abundance via fluorescent barcode sequencing of pooled lines, whereas GDSC2 and CTRPv2 measure total cellular ATP via luminescent CellTiter-Glo.
+   - **Metric Definitions:** PRISM and CTRPv2 report relative $EC_{50}$ (midpoint of the fitted sigmoid), whereas GDSC2 reports absolute $IC_{50}$ (concentration at 50% viability reduction), which extrapolates beyond maximum tested doses when killing is incomplete.
+   - **Culture Conditions:** Differences in initial cell seeding densities, microplate geometries (384-well vs pooled), serum lots, and baseline doubling times alter drug accumulation.
+   - **Cell Line Clonal Drift:** Genomic and transcriptomic divergence between cell line stocks maintained across different repositories introduces genuine biological heterogeneity (Ben-David et al., *Nature* 2018).
+2. **Epistemological Guardrail:** Replicated $IC_{50}$ values and steep Hill slopes across multiple screening consortia prove that a compound induces reproducible, concentration-dependent cytotoxicity at low nanomolar concentrations. **However, static population viability assays do not constitute proof of dynamical bistability, hysteresis, or irreversible phenotypic switching.** Definite proof of genuine biological tipping points requires single-cell tracking, drug washout assays, and multi-omic bifurcation experiments.
