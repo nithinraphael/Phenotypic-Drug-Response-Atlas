@@ -77,6 +77,12 @@ def _():
 
 
 @app.cell
+def _(public_dashboard_view):
+    public_dashboard_view
+    return
+
+
+@app.cell
 def _(mo, pl):
     @mo.cache
     def load_prism():
@@ -206,7 +212,7 @@ def _(bbbc021, mo, prism):
 
     samples = get_samples()
 
-    mo.vstack(
+    samples_view = mo.vstack(
         [
             mo.md("### Sample Rows & Schemas"),
             mo.accordion(
@@ -219,21 +225,13 @@ def _(bbbc021, mo, prism):
             ),
         ]
     )
-    return
+    return (samples_view,)
 
 
 @app.cell
 def _(mo, sample_img, sample_img_name):
-    mo.vstack(
-        [
-            mo.md("### BBBC021 Sample Microscopy Image"),
-            mo.md(
-                f"**File:** `{sample_img_name}` | **Shape:** {sample_img.shape} | **Dtype:** {sample_img.dtype}"
-            ),
-            mo.image(sample_img, width=450, caption=sample_img_name),
-        ]
-    )
-    return
+    sample_img_view = mo.image(sample_img, width=450, caption=sample_img_name)
+    return (sample_img_view,)
 
 
 @app.cell
@@ -311,8 +309,8 @@ def _(Error, Ok, Result, bbbc021, mo, pl, prism, zipfile):
         for r in results
     )
 
-    mo.vstack([mo.md("### Dataset Verification & Relationship Checks"), mo.md(status_md)])
-    return
+    s2_checks_view = mo.vstack([mo.md("### Dataset Verification & Relationship Checks"), mo.md(status_md)])
+    return results, s2_checks_view
 
 
 @app.cell
@@ -667,8 +665,7 @@ def _(
             ]
         )
 
-    prism_view
-    return
+    return (prism_view,)
 
 
 @app.cell
@@ -1237,8 +1234,7 @@ def _(
                 ]
             )
 
-    tp_view
-    return
+    return (tp_view,)
 
 
 @app.cell
@@ -1382,8 +1378,7 @@ def _(
             ]
         )
 
-    bbbc_view
-    return
+    return (bbbc_view,)
 
 
 @app.cell
@@ -1764,8 +1759,7 @@ def _(
             ]
         )
 
-    s7_output
-    return
+    return (s7_output,)
 
 
 @app.cell
@@ -2119,8 +2113,7 @@ def _(
             ]
         )
 
-    s8_output
-    return
+    return (s8_output,)
 
 
 @app.cell
@@ -2518,8 +2511,7 @@ def _(
             ]
         )
 
-    s9_view
-    return
+    return (s9_view,)
 
 
 @app.cell
@@ -2734,6 +2726,14 @@ def _(
     zipfile,
 ):
     if s10_meas_res.is_error():
+        s10_fig_drc = go.Figure()
+        s10_fig_umap = go.Figure()
+        s10_micro_viewer = mo.md("No image available.")
+        s10_pub_config = {"toImageButtonOptions": {"format": "svg", "scale": 2}}
+        s10_ic50 = 0.0
+        s10_slope = 0.0
+        s10_lo_ec, s10_hi_ec = 0.0, 0.0
+        s10_nearest_bbbc_dose = 0.0
         s10_dashboard_view = mo.md(f"⚠️ **PRISM Selection Error:** {s10_meas_res.error}")
     else:
         _meas, _curves_df = s10_meas_res.ok
@@ -3003,7 +3003,27 @@ def _(
                 ),
             ]
         )
-    return
+        s10_fig_drc = _fig_drc
+        s10_fig_umap = _fig_umap
+        s10_micro_viewer = _micro_viewer
+        s10_pub_config = _pub_config
+        s10_ic50 = _ic50
+        s10_slope = _slope
+        s10_lo_ec = _lo_ec
+        s10_hi_ec = _hi_ec
+        s10_nearest_bbbc_dose = _nearest_bbbc_dose
+    return (
+        s10_dashboard_view,
+        s10_fig_drc,
+        s10_fig_umap,
+        s10_hi_ec,
+        s10_ic50,
+        s10_lo_ec,
+        s10_micro_viewer,
+        s10_nearest_bbbc_dose,
+        s10_pub_config,
+        s10_slope,
+    )
 
 
 @app.cell
@@ -3321,8 +3341,21 @@ def _(
         }
     )
 
+    s12_attribution_card = _attribution_card
+    s12_fig_comp = _fig_comp
+    s12_filtered_df = _filtered_df
+    s12_top10_df = _top10_df
     s12_view = mo.vstack([s12_controls, _tabs_view])
-    return (s12_full_eval_df,)
+    return (
+        s12_attribution_card,
+        s12_download_btn,
+        s12_fig_comp,
+        s12_filtered_df,
+        s12_full_eval_df,
+        s12_top10_btn,
+        s12_top10_df,
+        s12_view,
+    )
 
 
 @app.cell
@@ -3563,7 +3596,7 @@ def _(
             ),
         ]
     )
-    return
+    return (s16_view,)
 
 
 @app.cell
@@ -3712,27 +3745,226 @@ def _(go, make_subplots, mo, np, os, pl):
             ),
         ]
     )
-    return
+    s17_fig5 = _fig5
+    return (
+        s17_download_btn,
+        s17_fig5,
+        s17_kpis,
+        s17_validation_summary_df,
+        s17_view,
+    )
 
 
 @app.cell
-def _():
-    return
+def _(
+    mo,
+    s10_bbbc_select,
+    s10_cell_select,
+    s10_conc_slider,
+    s10_drug_select,
+    s10_fig_drc,
+    s10_fig_umap,
+    s10_hi_ec,
+    s10_ic50,
+    s10_kpi_cards,
+    s10_lo_ec,
+    s10_micro_viewer,
+    s10_nearest_bbbc_dose,
+    s10_pub_config,
+    s10_slope,
+    s10_tier_filter,
+    s12_attribution_card,
+    s12_download_btn,
+    s12_fig_comp,
+    s12_filtered_df,
+    s12_top10_btn,
+    s12_top10_df,
+    s17_download_btn,
+    s17_fig5,
+    s17_kpis,
+    s17_validation_summary_df,
+):
+    _header = mo.vstack(
+        [
+            mo.md("# 🧬 Phenotypic Tipping-Point Atlas"),
+            mo.md(
+                "### High-Throughput Functional Pharmacogenomics & Deep Morphological Phenotyping\n"
+                "**Assay Platforms:** PRISM 120h Viability Screen (701k Curves) • BBBC021 MCF-7 Microscopy (Cell-DINO ViT-S/8) • "
+                "TabPFN-3.5-Fast Foundation Prior • GDSC2 & CTRPv2 Independent Validation"
+            ),
+            mo.md(
+                "> ⚠️ **Epistemological Guardrail:** All transitions identified in static 120-hour viability assays are classified as "
+                "**observational candidate steep responses**. Proof of true dynamical bistability, hysteresis, or non-recoverable "
+                "cellular state commitment requires orthogonal single-cell washout and dynamic live-cell imaging assays."
+            ),
+        ]
+    )
+
+    _tab_discoveries = mo.vstack(
+        [
+            mo.md("### 🏆 Top Candidate Steep-Response Transitions"),
+            mo.md(
+                "> **Global High-Throughput Discovery:** Systematically evaluating 701,004 PRISM monotherapy dose–response profiles. "
+                "Candidates are ranked by composite sensitivity score ($S = |\\text{Hill Slope}| \\times R^2$) with leak-free FDR multiple testing correction ($q < 0.05$)."
+            ),
+            s10_kpi_cards,
+            mo.hstack(
+                [
+                    s10_tier_filter,
+                    s12_top10_btn,
+                    s12_download_btn,
+                ],
+                justify="start",
+                gap=2,
+            ),
+            s12_top10_df,
+            mo.md(
+                "#### 🔬 Biological Insights & Mechanistic Drivers\n"
+                "- **Proteasome Disruption (Bortezomib):** Consistently exhibits ultra-steep population collapse ($|n_H| = 6.67 - 14.0$) across colorectal (RKO) and melanoma (A375) lines, reflecting threshold proteotoxic stress.\n"
+                "- **Antimetabolite Arrest (Floxuridine):** Induces sharp cellular collapse ($|n_H| = 13.46$) via catastrophic thymidylate depletion in lung (NCI-H2110) and colon models.\n"
+                "- **Epistemological Guardrail:** All candidates represent **observational candidate steep responses** in 120h viability assays; dynamic bistability requires single-cell washout and hysteresis assays."
+            ),
+        ]
+    )
+
+    _tab_drug_explorer = mo.vstack(
+        [
+            mo.md("### 💊 Interactive Drug Dose–Response Explorer"),
+            mo.md(
+                "> Multi-model pharmacodynamic calibration comparing experimental PRISM viability measurements, "
+                "smooth parametric 4-parameter log-logistic (LL4) Hill curves, and pretrained TabPFN-3.5-Fast regression priors."
+            ),
+            mo.hstack(
+                [
+                    s10_drug_select,
+                    s10_cell_select,
+                    s10_conc_slider,
+                ],
+                justify="start",
+                gap=2,
+            ),
+            mo.hstack([mo.ui.plotly(s10_fig_drc, config=s10_pub_config)], justify="start"),
+            mo.md(
+                f"#### 📊 Selected Curve Calibration Diagnostics\n"
+                f"- **Compound & Cell Line:** `{s10_drug_select.value}` on `{s10_cell_select.value}`\n"
+                f"- **Estimated Potency ($EC_{{50}}$):** `{s10_ic50:.4f} μM` | **Hill Slope ($|n_H|$):** `{abs(s10_slope):.2f}`\n"
+                f"- **Dynamic Transition Window $[EC_{{20}}, EC_{{80}}]$:** `[{s10_lo_ec:.4f}, {s10_hi_ec:.4f}] μM`\n"
+                f"- **Active Cursor Concentration:** `{s10_conc_slider.value} μM`\n"
+                f"- **Model Prior:** TabPFN foundation regressor provides zero-shot Bayesian uncertainty prior across unseen doses."
+            ),
+        ]
+    )
+
+    _tab_cell_explorer = mo.vstack(
+        [
+            mo.md("### 🔬 Cell Morphology & State Space Explorer"),
+            mo.md(
+                "> 🔬 **Independent High-Content Imaging Modality (BBBC021 MCF-7 Cells):** Phenotypic imaging in MCF-7 cells is strictly separated from PRISM 120h pooled viability. "
+                "These assays evaluate morphological state shifts independently from cell viability."
+            ),
+            mo.hstack(
+                [
+                    s10_bbbc_select,
+                ],
+                justify="start",
+                gap=2,
+            ),
+            mo.hstack([mo.ui.plotly(s10_fig_umap, config=s10_pub_config)], justify="start"),
+            mo.md("#### 🖼️ High-Resolution Fluorescence Microscopy (BBBC021 MCF-7)"),
+            s10_micro_viewer,
+            mo.md(
+                "> **Staining Channels:** Red = Actin (Cytoskeleton), Green = Tubulin (Microtubules), Blue = DAPI (Nuclei). "
+                "Scrubbing the dose slider dynamically highlights the nearest matched field in 2D Cell-DINO ViT-S/8 embedding space."
+            ),
+        ]
+    )
+
+    _tab_validation = mo.vstack(
+        [
+            mo.md("### 🌐 Cross-Dataset Experimental Validation & Benchmarks"),
+            mo.md(
+                "> Independent experimental validation against the **Genomics of Drug Sensitivity in Cancer (GDSC2, 72h)** "
+                "and the **Cancer Therapeutics Response Portal (CTRPv2, 72h)** using standardized Cellosaurus / DepMap identifiers."
+            ),
+            s17_kpis,
+            mo.hstack([s17_download_btn], justify="start"),
+            mo.md("#### 📊 Audited Independent Validation Matrix (10 Candidates)"),
+            s17_validation_summary_df,
+            mo.md("#### 🔬 Cross-Dataset Potency & Steepness Concordance (Figure 5)"),
+            mo.hstack([mo.ui.plotly(s17_fig5)], justify="start"),
+            mo.md("#### 📈 Leak-Free Dose-Level Generalization Benchmark (Figure 2)"),
+            mo.hstack([mo.ui.plotly(s12_fig_comp, config=s10_pub_config)], justify="start"),
+            mo.md(
+                "> 🔬 **Key Empirical Finding:** In leak-free dose-level cross-validation, the **smooth parametric Hill curve ($RMSE = 0.095$)** "
+                "and **pretrained TabPFN foundation prior** generalize significantly better to unseen concentrations than the rigid **segmented breakpoint model ($RMSE = 0.185$)**, "
+                "which suffers from rank deficiency and overfitting on sparse dose series."
+            ),
+            s12_attribution_card,
+        ]
+    )
+
+    public_dashboard_view = mo.vstack(
+        [
+            _header,
+            mo.ui.tabs(
+                {
+                    "🏆 Discoveries": _tab_discoveries,
+                    "💊 Drug Explorer": _tab_drug_explorer,
+                    "🔬 Cell Explorer": _tab_cell_explorer,
+                    "🌐 Validation": _tab_validation,
+                }
+            ),
+        ]
+    )
+    return (public_dashboard_view,)
 
 
 @app.cell
-def _():
-    return
-
-
-@app.cell
-def _():
-    return
-
-
-@app.cell
-def _():
-    return
+def _(
+    bbbc_view,
+    mo,
+    prism_view,
+    results,
+    s10_dashboard_view,
+    s12_view,
+    s16_view,
+    s17_view,
+    s7_output,
+    s8_output,
+    s9_view,
+    summary_df,
+    tp_view,
+):
+    dev_workspace = mo.accordion(
+        {
+            "🛠️ Developer Diagnostics & Pipeline Verification (Steps 2–17)": mo.vstack(
+                [
+                    mo.md("### 🛠️ Developer Diagnostics Workspace"),
+                    mo.md(
+                        "> Internal verification pipelines, data schemas, and sanity checks. "
+                        "The complete development notebook is also preserved separately in `dev_notebook.py`."
+                    ),
+                    mo.accordion(
+                        {
+                            "Step 2: PRISM & BBBC021 Raw Schemas & Verification": mo.vstack([summary_df, mo.md(str(results))]),
+                            "Step 4: PRISM Dose-Response Raw Component": prism_view,
+                            "Step 5: TabPFN Zero-Shot Calibration Component": tp_view,
+                            "Step 6: BBBC021 Microscopy Explorer Component": bbbc_view,
+                            "Step 7: Cell-DINO Embeddings Diagnostic": s7_output,
+                            "Step 8: Interactive UMAP Diagnostic": s8_output,
+                            "Step 9: Model Cross-Validation Diagnostic": s9_view,
+                            "Step 10: Interactive Atlas Diagnostic Layout": s10_dashboard_view,
+                            "Step 12: Multi-Hypothesis & FDR Diagnostic": s12_view,
+                            "Step 16: Research Report Diagnostic": s16_view,
+                            "Step 17: Cross-Dataset Validation Diagnostic": s17_view,
+                        }
+                    ),
+                ]
+            )
+        }
+    )
+    dev_workspace
+    return (dev_workspace,)
 
 
 if __name__ == "__main__":
