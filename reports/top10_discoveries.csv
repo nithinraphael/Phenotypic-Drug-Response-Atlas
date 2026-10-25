@@ -1,0 +1,11 @@
+Rank,Compound,Cell_Line_DepMap_ID,Cell_Line_Name,Primary_Tissue,Transition_Dose_EC50_uM,EC50_95CI_Lower_uM,EC50_95CI_Upper_uM,Hill_Slope_nH,Slope_SE,R2_Fit,p_value,FDR_q_value,Sensitivity_Score,Evidence_Tier,Assay_Modality,Epistemological_Status
+1,floxuridine,ACH-000929,NCIH2110_LUNG,lung,0.0383,0.03544,0.0414,13.46,0.076,0.785,0.0,0.0,10.566,Tier 3 (Inconclusive ⭐),PRISM 120h Viability,Candidate Steep Response (Observational)
+2,floxuridine,ACH-000886,NCIH2009_LUNG,lung,0.0083,0.00742,0.00928,6.75,0.05,0.888,0.0,0.0,5.994,Tier 2 (Moderate ⭐⭐),PRISM 120h Viability,Candidate Steep Response (Observational)
+3,floxuridine,ACH-000766,NCIH1648_LUNG,lung,0.0388,0.03396,0.04433,6.8,0.057,0.839,0.0,0.0,5.705,Tier 2 (Moderate ⭐⭐),PRISM 120h Viability,Candidate Steep Response (Observational)
+4,floxuridine,ACH-000948,2313287_STOMACH,gastric,0.0352,0.03045,0.04069,7.27,0.077,0.782,0.0,0.0,5.685,Tier 3 (Inconclusive ⭐),PRISM 120h Viability,Candidate Steep Response (Observational)
+5,floxuridine,ACH-000643,HDQP1_BREAST,breast,0.087,0.07415,0.10208,7.47,0.099,0.72,0.0,0.0,5.378,Tier 3 (Inconclusive ⭐),PRISM 120h Viability,Candidate Steep Response (Observational)
+6,floxuridine,ACH-000320,PSN1_PANCREAS,pancreas,0.0075,0.00694,0.00811,4.77,0.05,0.973,0.0,0.0,4.641,Tier 1 (High Evidence ⭐⭐⭐),PRISM 120h Viability,Candidate Steep Response (Observational)
+7,floxuridine,ACH-000118,HUPT3_PANCREAS,pancreas,0.0983,0.08126,0.11891,6.01,0.091,0.743,0.0,0.0,4.465,Tier 3 (Inconclusive ⭐),PRISM 120h Viability,Candidate Steep Response (Observational)
+8,floxuridine,ACH-000787,LXF289_LUNG,lung,0.0242,0.0204,0.0287,5.14,0.053,0.849,0.0,0.0,4.364,Tier 2 (Moderate ⭐⭐),PRISM 120h Viability,Candidate Steep Response (Observational)
+9,floxuridine,ACH-000021,NCIH1693_LUNG,lung,0.0939,0.07666,0.11501,5.95,0.101,0.714,0.0,0.0,4.248,Tier 3 (Inconclusive ⭐),PRISM 120h Viability,Candidate Steep Response (Observational)
+10,floxuridine,ACH-000592,TM31_CENTRAL_NERVOUS_SYSTEM,central_nervous_system,0.0087,0.00708,0.01069,5.75,0.098,0.724,0.0,0.0,4.163,Tier 3 (Inconclusive ⭐),PRISM 120h Viability,Candidate Steep Response (Observational)

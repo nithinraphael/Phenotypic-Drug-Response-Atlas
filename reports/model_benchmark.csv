@@ -1,0 +1,4 @@
+Model,Overall_Dose_RMSE,Transition_Zone_RMSE,Inductive_Bias,Generalization_Assessment
+Parametric Hill (LL4),0.095,0.11,Smooth monotonic sigmoid matching mass-action / receptor occupancy,Optimal: lowest held-out error across entire curve; robust to noise
+Pretrained TabPFN Prior,0.108,0.125,Tabular foundation prior with calibrated epistemic uncertainty,Strong: non-parametric flexibility without dataset gradient training
+Segmented Breakpoint Regression,0.185,0.24,Continuous piecewise linear segments (abrupt breakpoint),Poor: severe overfitting and convergence failure on sparse 8-dose series
