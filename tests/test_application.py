@@ -13,9 +13,9 @@ class ApplicationTests(unittest.TestCase):
     def setUpClass(cls):
         cls.outputs,cls.definitions=app.run()
 
-    def test_five_views_and_real_data(self):
+    def test_four_public_views_and_real_data(self):
         d=self.definitions
-        self.assertEqual(len(self.outputs),22)
+        self.assertEqual(d['public_tabs'].value,'Discoveries')
         for name in ['overview_view','drc_view','imaging_view','validation_view','methods_view']:
             self.assertIsNotNone(d[name])
         self.assertEqual(d['counts']['raw_curve_records'],701004)
@@ -33,7 +33,7 @@ class ApplicationTests(unittest.TestCase):
         chosen=rows.filter(pl.col('name')=='floxuridine').row(0,named=True)
         label=f"{chosen['name']} · {chosen['broad_id']}"
         replacement=dict(compound_rows=rows,compound_options={label:chosen['broad_id']},default_compound=label,
-                         compound_select=SimpleNamespace(value=chosen['broad_id'],selected_key=label))
+                         compound_select=SimpleNamespace(value=chosen['broad_id'],selected_key=label,text=''))
         outputs,changed=app.run(defs=replacement)
         self.assertTrue(changed['measurement_result'].is_ok())
         self.assertEqual(changed['measurement_result'].ok['broad_id'].unique().to_list(),[chosen['broad_id']])
@@ -64,7 +64,7 @@ class ApplicationTests(unittest.TestCase):
         d=self.definitions
         label=next(k for k,v in d['cell_options'].items() if v!=d['cell_select'].value)
         replacement={name:d[name] for name in ['tested','names','cell_options','default_cell']}
-        replacement['cell_select']=SimpleNamespace(value=d['cell_options'][label],selected_key=label)
+        replacement['cell_select']=SimpleNamespace(value=d['cell_options'][label],selected_key=label,text='')
         outputs,changed=app.run(defs=replacement)
         self.assertTrue(changed['measurement_result'].is_ok())
         self.assertEqual(changed['measurement_result'].ok[''].unique().to_list(),[d['cell_options'][label]])

@@ -53,7 +53,8 @@ class UITests(unittest.TestCase):
             for invalid in ['se_slopes','false_discovery_control','norm.cdf','ci_band','Evidence Tier','fdr_q']:
                 self.assertNotIn(invalid,text)
         tree=ast.parse(Path('notebook.py').read_text())
-        self.assertEqual(sum(isinstance(n,ast.Constant) and n.value in ('Overview','Dose–Response','Cell Imaging','Validation','Methods') for n in ast.walk(tree)),5)
+        tabs=next(n for n in ast.walk(tree) if isinstance(n,ast.Call) and isinstance(n.func,ast.Attribute) and n.func.attr=='tabs')
+        self.assertEqual({key.value for key in tabs.args[0].keys},{'Discoveries','Drug Explorer','Cell Explorer','Validation'})
 
     def test_plot_values_equal_input_tables(self):
         summary=pl.DataFrame({'model':['test'],'common_rmse':[0.123]})

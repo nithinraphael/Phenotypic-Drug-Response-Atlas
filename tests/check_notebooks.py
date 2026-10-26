@@ -6,7 +6,7 @@ from marimo._lint.rules import DEFAULT_RULE_CODES
 
 
 async def main():
-    for path in ('notebook.py','dev_notebook.py'):
+    for path in ('notebook.py','dev_notebook.py','audit_notebook.py'):
         loaded=get_notebook_status(path)
         assert loaded.status=='valid',path
         for code,rule in DEFAULT_RULE_CODES.items():

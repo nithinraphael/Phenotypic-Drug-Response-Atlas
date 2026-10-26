@@ -1,0 +1,17 @@
+PASS Four public tabs load
+PASS Shortlist and full catalog downloads
+PASS Candidate selection updates compound, cell and screen
+PASS Compound identifier updates source screen
+PASS Searchable compound and cell selectors
+PASS Real configured TabPFN prediction
+PASS Cursor updates annotation and preserves prediction
+PASS Current observations, HTML and SVG figure downloads
+PASS Plot zoom/reset and uncertainty disclosure
+PASS Imaging compound, dose, field, controls and honest map state
+PASS Microscopy interpretation disclosure
+PASS Imaging selection does not alter PRISM condition
+PASS Live concentration benchmark and matching export
+PASS Coverage, methods, scope and citation download
+PASS desktop navigation, rendering and no horizontal overflow
+PASS mobile navigation, rendering and no horizontal overflow
+PASS No browser JavaScript errors

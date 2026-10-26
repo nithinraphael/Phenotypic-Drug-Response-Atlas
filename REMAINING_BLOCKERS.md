@@ -12,9 +12,12 @@
 | Reviewed chemical and cell-line crosswalks; assay/bound/censoring metadata | External matching and potency interpretation | Resolve synonyms/salts/stereochemistry, dataset IDs, metric equivalence and repeated conditions. No display-name-only joins | Ambiguous/unconfigured records excluded; EC50 and IC50 remain separate |
 | Additional acquisition/control metadata | Fully matched microscopy controls | Current matching uses same plate and replicate group. Confirm finer batch/acquisition compatibility before asserting equivalence | Explicitly limited control matching; no unrelated-image fallback |
 | Defined numerical perturbation study | Fit perturbation stability | Current diagnostics assess sampling and Jacobian conditioning; no perturbation experiment executed | Marked Not evaluated |
-| Browser automation/browser binary | Browser E2E, visual inspection, static Kaleido SVG/PNG generation | No Playwright, Selenium, Chrome or Chromium installed. Install/configure separately if needed; no downloads attempted | Five-tab app passes programmatic execution; HTML figures exported; no browser-validation claim |
-| Working marimo CLI asynchronous file checks in this runtime | CLI check command | `marimo check` times out. All 16 default installed lint rules run directly on both files without diagnostics | App executes; exact alternative command documented |
 
 The executed benchmark covers one curve, three folds and only two common successful predictions. It cannot establish model superiority, population performance or generalization to unseen compound–cell-line combinations. A declared broader evaluation sample with suitable concentration coverage and failure analysis is required.
 
 Raw files remain unchanged. Historical outputs remain quarantined. None of these missing inputs is replaced by synthetic observations or guessed provenance.
+
+
+## Step 18 tooling update
+
+Browser tooling was found in the existing cache. Desktop/mobile Chromium interactions, real prediction and evaluation controls, and native SVG/HTML downloads have now been executed. Full marimo CLI checks pass outside the sandbox, so the earlier CLI and browser-tooling rows are superseded for the public workflow. Cross-browser/screen-reader testing and static Kaleido PNG generation remain unexecuted. External-data provenance, embedding attribution and statistical-uncertainty limitations are unchanged. See STEP18_REDESIGN.md.

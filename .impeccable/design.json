@@ -1,0 +1,283 @@
+{
+  "schemaVersion": 2,
+  "generatedAt": "2026-10-26T16:15:06.876889+00:00",
+  "title": "Design System: Phenotypic Drug-Response Atlas",
+  "extensions": {
+    "colorMeta": {
+      "ink": {
+        "role": "neutral",
+        "displayName": "Deep teal ink",
+        "tonalRamp": [
+          "oklch(15.00% 0.04293 192.92)",
+          "oklch(26.43% 0.04293 192.92)",
+          "oklch(37.86% 0.04293 192.92)",
+          "oklch(49.29% 0.04293 192.92)",
+          "oklch(60.71% 0.04293 192.92)",
+          "oklch(72.14% 0.04293 192.92)",
+          "oklch(83.57% 0.04293 192.92)",
+          "oklch(95.00% 0.04293 192.92)"
+        ]
+      },
+      "muted": {
+        "role": "neutral",
+        "displayName": "Muted teal",
+        "tonalRamp": [
+          "oklch(15.00% 0.02564 185.74)",
+          "oklch(26.43% 0.02564 185.74)",
+          "oklch(37.86% 0.02564 185.74)",
+          "oklch(49.29% 0.02564 185.74)",
+          "oklch(60.71% 0.02564 185.74)",
+          "oklch(72.14% 0.02564 185.74)",
+          "oklch(83.57% 0.02564 185.74)",
+          "oklch(95.00% 0.02564 185.74)"
+        ]
+      },
+      "measured": {
+        "role": "primary",
+        "displayName": "Measured teal",
+        "tonalRamp": [
+          "oklch(15.00% 0.07752 184.20)",
+          "oklch(26.43% 0.07752 184.20)",
+          "oklch(37.86% 0.07752 184.20)",
+          "oklch(49.29% 0.07752 184.20)",
+          "oklch(60.71% 0.07752 184.20)",
+          "oklch(72.14% 0.07752 184.20)",
+          "oklch(83.57% 0.07752 184.20)",
+          "oklch(95.00% 0.07752 184.20)"
+        ]
+      },
+      "prediction": {
+        "role": "primary",
+        "displayName": "Prediction blue",
+        "tonalRamp": [
+          "oklch(15.00% 0.15880 263.79)",
+          "oklch(26.43% 0.15880 263.79)",
+          "oklch(37.86% 0.15880 263.79)",
+          "oklch(49.29% 0.15880 263.79)",
+          "oklch(60.71% 0.15880 263.79)",
+          "oklch(72.14% 0.15880 263.79)",
+          "oklch(83.57% 0.15880 263.79)",
+          "oklch(95.00% 0.15880 263.79)"
+        ]
+      },
+      "fitted-span": {
+        "role": "primary",
+        "displayName": "Fitted-span amber",
+        "tonalRamp": [
+          "oklch(15.00% 0.13146 62.29)",
+          "oklch(26.43% 0.13146 62.29)",
+          "oklch(37.86% 0.13146 62.29)",
+          "oklch(49.29% 0.13146 62.29)",
+          "oklch(60.71% 0.13146 62.29)",
+          "oklch(72.14% 0.13146 62.29)",
+          "oklch(83.57% 0.13146 62.29)",
+          "oklch(95.00% 0.13146 62.29)"
+        ]
+      },
+      "canvas": {
+        "role": "neutral",
+        "displayName": "Scientific canvas",
+        "tonalRamp": [
+          "oklch(15.00% 0.00249 165.08)",
+          "oklch(26.43% 0.00249 165.08)",
+          "oklch(37.86% 0.00249 165.08)",
+          "oklch(49.29% 0.00249 165.08)",
+          "oklch(60.71% 0.00249 165.08)",
+          "oklch(72.14% 0.00249 165.08)",
+          "oklch(83.57% 0.00249 165.08)",
+          "oklch(95.00% 0.00249 165.08)"
+        ]
+      },
+      "surface": {
+        "role": "neutral",
+        "displayName": "Figure white",
+        "tonalRamp": [
+          "oklch(15.00% 0.00000 89.88)",
+          "oklch(26.43% 0.00000 89.88)",
+          "oklch(37.86% 0.00000 89.88)",
+          "oklch(49.29% 0.00000 89.88)",
+          "oklch(60.71% 0.00000 89.88)",
+          "oklch(72.14% 0.00000 89.88)",
+          "oklch(83.57% 0.00000 89.88)",
+          "oklch(95.00% 0.00000 89.88)"
+        ]
+      },
+      "border": {
+        "role": "neutral",
+        "displayName": "Quiet border",
+        "tonalRamp": [
+          "oklch(15.00% 0.01102 167.78)",
+          "oklch(26.43% 0.01102 167.78)",
+          "oklch(37.86% 0.01102 167.78)",
+          "oklch(49.29% 0.01102 167.78)",
+          "oklch(60.71% 0.01102 167.78)",
+          "oklch(72.14% 0.01102 167.78)",
+          "oklch(83.57% 0.01102 167.78)",
+          "oklch(95.00% 0.01102 167.78)"
+        ]
+      },
+      "unavailable": {
+        "role": "neutral",
+        "displayName": "Unavailable wash",
+        "tonalRamp": [
+          "oklch(15.00% 0.00593 170.45)",
+          "oklch(26.43% 0.00593 170.45)",
+          "oklch(37.86% 0.00593 170.45)",
+          "oklch(49.29% 0.00593 170.45)",
+          "oklch(60.71% 0.00593 170.45)",
+          "oklch(72.14% 0.00593 170.45)",
+          "oklch(83.57% 0.00593 170.45)",
+          "oklch(95.00% 0.00593 170.45)"
+        ]
+      },
+      "plot-grid": {
+        "role": "neutral",
+        "displayName": "Plot grid",
+        "tonalRamp": [
+          "oklch(15.00% 0.00753 164.93)",
+          "oklch(26.43% 0.00753 164.93)",
+          "oklch(37.86% 0.00753 164.93)",
+          "oklch(49.29% 0.00753 164.93)",
+          "oklch(60.71% 0.00753 164.93)",
+          "oklch(72.14% 0.00753 164.93)",
+          "oklch(83.57% 0.00753 164.93)",
+          "oklch(95.00% 0.00753 164.93)"
+        ]
+      },
+      "baseline": {
+        "role": "neutral",
+        "displayName": "Baseline gray-green",
+        "tonalRamp": [
+          "oklch(15.00% 0.02641 180.10)",
+          "oklch(26.43% 0.02641 180.10)",
+          "oklch(37.86% 0.02641 180.10)",
+          "oklch(49.29% 0.02641 180.10)",
+          "oklch(60.71% 0.02641 180.10)",
+          "oklch(72.14% 0.02641 180.10)",
+          "oklch(83.57% 0.02641 180.10)",
+          "oklch(95.00% 0.02641 180.10)"
+        ]
+      },
+      "fit-quality-light": {
+        "role": "primary",
+        "displayName": "Fit-quality light teal",
+        "tonalRamp": [
+          "oklch(15.00% 0.03998 167.85)",
+          "oklch(26.43% 0.03998 167.85)",
+          "oklch(37.86% 0.03998 167.85)",
+          "oklch(49.29% 0.03998 167.85)",
+          "oklch(60.71% 0.03998 167.85)",
+          "oklch(72.14% 0.03998 167.85)",
+          "oklch(83.57% 0.03998 167.85)",
+          "oklch(95.00% 0.03998 167.85)"
+        ]
+      },
+      "selection": {
+        "role": "neutral",
+        "displayName": "Selection wash",
+        "tonalRamp": [
+          "oklch(15.00% 0.02319 172.82)",
+          "oklch(26.43% 0.02319 172.82)",
+          "oklch(37.86% 0.02319 172.82)",
+          "oklch(49.29% 0.02319 172.82)",
+          "oklch(60.71% 0.02319 172.82)",
+          "oklch(72.14% 0.02319 172.82)",
+          "oklch(83.57% 0.02319 172.82)",
+          "oklch(95.00% 0.02319 172.82)"
+        ]
+      }
+    },
+    "typographyMeta": {
+      "display": {
+        "displayName": "Page title",
+        "purpose": "The atlas heading, reduced on mobile."
+      },
+      "plot": {
+        "displayName": "Scientific plot labels",
+        "purpose": "Axes, units and chart annotations."
+      }
+    },
+    "shadows": [],
+    "motion": [],
+    "breakpoints": [
+      {
+        "name": "mobile",
+        "value": "700px"
+      }
+    ]
+  },
+  "components": [
+    {
+      "name": "Metric card",
+      "kind": "card",
+      "refersTo": "metric-card",
+      "description": "A measured summary count with a compact label.",
+      "html": "<div class=\"ds-metric\"><strong>1,448</strong><span>Compounds by name</span></div>",
+      "css": ".ds-metric{font-family:\"PT Sans\",system-ui,sans-serif;background:#fff;color:var(--atlas-ink,#163c3b);border:1px solid #dce5e1;border-radius:12px;padding:18px 20px}.ds-metric strong{display:block;font-size:1.75rem;font-weight:600;line-height:1.3;font-variant-numeric:tabular-nums}.ds-metric span{display:block;font-size:.875rem;color:var(--atlas-muted,#526764);margin-top:6px}"
+    },
+    {
+      "name": "Unavailable evidence",
+      "kind": "card",
+      "refersTo": "unavailable-panel",
+      "description": "An explicit evidence limit with a brief explanation.",
+      "html": "<section class=\"ds-empty\"><h3>External evidence unavailable</h3><p>Source versions, potency definitions and identifier mappings have not been verified.</p></section>",
+      "css": ".ds-empty{font-family:\"PT Sans\",system-ui,sans-serif;background:#eef3f1;color:var(--atlas-ink,#163c3b);padding:24px;border:1px solid #dce5e1;border-radius:12px}.ds-empty h3{margin:0 0 8px;font-size:1.125rem}.ds-empty p{margin:0;color:var(--atlas-muted,#526764);max-width:72ch;line-height:1.6}"
+    },
+    {
+      "name": "Native select",
+      "kind": "input",
+      "refersTo": "native-select",
+      "description": "Owned CSS on a native selector; searchable marimo internals remain runtime-owned.",
+      "html": "<label class=\"ds-field\">Screen <select><option>HTS002</option><option>HTS004</option></select></label>",
+      "css": ".ds-field{font-family:\"PT Sans\",system-ui,sans-serif;color:var(--atlas-ink,#163c3b)}.ds-field select{min-height:42px;font-size:16px;border-radius:8px;padding-inline:10px}.ds-field select:focus-visible{outline:2px solid #315bbb;outline-offset:3px}"
+    },
+    {
+      "name": "Native action",
+      "kind": "button",
+      "description": "Owned minimum sizing and focus; marimo supplies production button chrome.",
+      "html": "<button class=\"ds-action\">Evaluate this condition</button>",
+      "css": ".ds-action{font-family:\"PT Sans\",system-ui,sans-serif;min-height:42px;font-size:16px}.ds-action:focus-visible{outline:2px solid #315bbb;outline-offset:3px}"
+    },
+    {
+      "name": "Native tab labels",
+      "kind": "nav",
+      "refersTo": "tab-selected",
+      "description": "Owned tab typography and sizing; marimo supplies selected and hover surfaces.",
+      "html": "<div class=\"ds-tabs\" role=\"tablist\"><button role=\"tab\" aria-selected=\"true\">Discoveries</button><button role=\"tab\" aria-selected=\"false\">Drug Explorer</button><button role=\"tab\" aria-selected=\"false\">Cell Explorer</button><button role=\"tab\" aria-selected=\"false\">Validation</button></div>",
+      "css": ".ds-tabs [role=tab]{font-family:\"PT Sans\",system-ui,sans-serif;min-height:44px;font-size:15px}.ds-tabs [aria-selected=true]{color:#176b62;font-weight:600}.ds-tabs [role=tab]:focus-visible{outline:2px solid #315bbb;outline-offset:3px}@media(max-width:700px){.ds-tabs{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));width:100%}.ds-tabs [role=tab]{padding:10px;font-size:14px}}"
+    }
+  ],
+  "narrative": {
+    "northStar": "Journal Figure Plates",
+    "overview": "Journal figure plates guide the atlas: pale canvas, dark teal text and white plotting surfaces. PT Sans carries headings, controls and scientific labels. Figures have room for axes, units and legends; compact native controls keep the working conditions visible.\n\nThe interface uses marimo tabs, selectors, tables and disclosures with a small CSS layer. Existing microscopy supplies the imagery. Color, symbols, line styles and captions distinguish observations, fitted responses and conditioned predictions.",
+    "keyCharacteristics": [
+      "White figure plates on a pale scientific canvas.",
+      "Native controls and responsive comparison layouts.",
+      "Explicit scientific labels and restrained evidence colors."
+    ],
+    "rules": [
+      {
+        "name": "The Evidence Color Rule",
+        "body": "Pair evidence color with a legend label and, for response curves, marker or line style. Amber denotes a fitted effect span, never uncertainty.",
+        "section": "colors"
+      },
+      {
+        "name": "The Native Control Rule",
+        "body": "Keep marimo interaction behavior; apply the atlas type, sizing and focus treatment without rebuilding the widget.",
+        "section": "components"
+      }
+    ],
+    "dos": [
+      "Do retain native marimo controls and visible keyboard focus.",
+      "Do label axes, units, conditions and evidence types in figures and captions.",
+      "Do keep microscopy provenance and display adjustments visible.",
+      "Do distinguish measurements, fits, conditioned predictions and fitted effect spans."
+    ],
+    "donts": [
+      "Don't present fitted effect spans as confidence intervals or biological tipping points.",
+      "Don't imply PRISM viability and BBBC021 microscopy are paired assays.",
+      "Don't add decorative imagery or custom JavaScript to this interface.",
+      "Don't manufacture unavailable uncertainty, embeddings or external comparisons."
+    ]
+  }
+}

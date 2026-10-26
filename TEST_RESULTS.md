@@ -76,3 +76,18 @@ Additional executed integrity checks: all sixteen original data-file hashes unch
 - TabPFN v3.5 and alternative feature representation: not configured/evaluated. Executed pretrained analysis is explicitly v2, log10 dose, CPU.
 
 No unittest tests were skipped. The items above are unavailable or unexecuted analyses, not passed tests. Early development smoke runs exposed an unsupported nested marimo embedding path; diagnostics was repaired to call shared analysis directly, and its final smoke test passes.
+
+
+## Step 18 public-interface verification
+
+The earlier results above remain the repair baseline. The redesigned public app now has four tabs; the old five-view workspace is preserved as audit_notebook.py.
+
+- `MPLCONFIGDIR=/tmp/atlas-matplotlib .venv/bin/python -m unittest discover -s tests -v`: **65 passed, 0 failed, 0 skipped**. Current log: artifacts/step18/scientific-tests.log.
+- `timeout 30 .venv/bin/marimo check notebook.py dev_notebook.py audit_notebook.py` executed outside the sandbox: **passed, exit 0**. The prior CLI timeout was specific to sandboxed asynchronous file operations.
+- `.venv/bin/python tests/check_notebooks.py`: all 16 default rules pass on all three notebooks.
+- `uv run --no-project --offline --with playwright python tests/browser_step18.py`: **17 browser-check groups passed** using the already cached Chromium binary. Desktop 1440 × 1050; mobile 390 × 844. Explicit assertions preserve logarithmic concentration axes and units after zoom, tab navigation and resizing.
+- Real configured TabPFN predictions and current-condition held-out evaluation ran through the unchanged implementations. CSV, HTML, SVG and methods downloads were verified against their current scope. These checks do not establish model superiority.
+- `MPLCONFIGDIR=/tmp/atlas-matplotlib .venv/bin/python audit_notebook.py`: preserved workspace executed successfully from the project root. Diagnostics remains unchanged.
+- `git diff --check` and compilation passed. Raw input hashes and shared scientific/dependency sources remain unchanged; preservation.json records the original notebook copy hash.
+
+Browser/render evidence and scoped design review are in artifacts/step18. All prior unexecuted-analysis limitations still apply except the browser/native-SVG and marimo-CLI checks now demonstrated here. Cross-browser, screen-reader and static Kaleido PNG evaluation were not run.

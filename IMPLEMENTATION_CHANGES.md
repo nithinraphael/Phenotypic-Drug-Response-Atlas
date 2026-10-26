@@ -34,3 +34,23 @@
 | reports/runs/* | Absent | Explicitly executed analytical outputs and manifests | Each run identifies its sample and failures; no global benchmark implication |
 
 Additional evidence files: TEST_EXECUTION.log records actual named test outcomes; reports/LATEST.md points only to the current completed run. __marimo__/session/notebook.py.json was moved into quarantine to discard stale UI state. config/tabpfn.json and model_inventory.json record the verified v2 identity and the separately unverified generic DINO caches. No credentials are stored in these files.
+
+
+## Step 18: public atlas redesign
+
+| File | Change | Reason / compatibility |
+|---|---|---|
+| notebook.py | Four public tabs, persistent tab selection, linked candidate selectors, curated scientific views, deferred downloads, verified recorded benchmark display | Public navigation changes; all numerical implementations and scientific limits remain intact |
+| public_ui.py | Presentation helpers, role colors, large plots, escaped state messages and benchmark artifact verification | No new statistical algorithm; Plotly template axis metadata prevents native remount from losing log scales/units |
+| atlas.css | Small native-control, typography, canvas and responsive-grid stylesheet | Desktop/mobile visual system; no application JavaScript |
+| audit_notebook.py | Byte-identical copy of the pre-redesign public notebook | Retains all former tables, controls, calculations and methods; root location preserves imports and relative data paths |
+| tests/test_application.py, tests/test_ui.py | Updated navigation expectations and HTML test doubles | Existing scientific assertions retained |
+| tests/test_public_ui.py | Numerical styling invariance, source-fit values, provenance and escaped HTML tests | Prevents a presentation change from changing research values |
+| tests/browser_step18.py | Live Chromium interaction and responsive regression script | Uses cached Playwright/Chromium outside app dependencies; no training or synthetic research data |
+| tests/check_notebooks.py | Includes preserved audit notebook | All notebook checks cover the development entry too |
+| README.md | Four-tab workflow and development entry commands | Public and audit workspace entry points are explicit |
+| PRODUCT.md, DESIGN.md, .impeccable/* | Product brief, direction record and extracted design tokens | Design documentation only; no new scientific claim |
+| STEP18_REDESIGN.md, artifacts/step18/* | Actual test, screenshot, preservation and scoped review evidence | Verification artifacts kept separate from audited scientific reports |
+| TEST_RESULTS.md, REMAINING_BLOCKERS.md | Append current UI checks and mark resolved tooling limitations | Earlier scientific limitations and repair results retained |
+
+Scientific analysis modules, components.py, dependencies, model configuration, raw observations and audited run outputs were not changed.

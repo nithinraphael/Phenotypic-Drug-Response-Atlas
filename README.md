@@ -1,13 +1,13 @@
 # Phenotypic Drug-Response Atlas
 
-marimo application for descriptive PRISM screening, per-screen dose–response fitting and BBBC021 microscopy viewing. Five views: Overview, Dose–Response, Cell Imaging, Validation, Methods.
+marimo application for descriptive PRISM screening, per-screen dose–response fitting and BBBC021 microscopy viewing. Four public tabs: Discoveries, Drug Explorer, Cell Explorer, Validation. Methods and citations are available within Validation.
 
 ```sh
 uv sync --locked
 uv run marimo run notebook.py
 ```
 
-Use `uv run marimo edit dev_notebook.py` for diagnostics. `hello.py` launches the same public application.
+Use `uv run marimo edit dev_notebook.py` for diagnostics. The complete pre-redesign interface, including raw tables and filter audits, is preserved at `audit_notebook.py` and can be opened with `uv run marimo edit audit_notebook.py`. `hello.py` launches the same public application.
 
 Raw inputs belong under `data/prism` and `data/bbbc021`. No downloads occur during application import or execution. `uv run python scripts/download_data.py` explicitly downloads the configured PRISM files and one BBBC021 plate; it preserves existing files and writes an acquisition manifest. Existing files are not retroactively assigned a download date.
 

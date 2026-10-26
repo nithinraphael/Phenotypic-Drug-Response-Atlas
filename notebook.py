@@ -1,7 +1,7 @@
 import marimo
 
 __generated_with = '0.25.2'
-app = marimo.App(width='medium', app_title='Phenotypic Drug-Response Atlas')
+app = marimo.App(width='full', css_file='atlas.css', app_title='Phenotypic Drug-Response Atlas')
 
 
 @app.cell
@@ -13,7 +13,8 @@ def _():
     from expression import Error, Ok
     from analysis import benchmark, catalog, embeddings, fitting, microscopy, models, prism, provenance, validation
     import components
-    return Path, Error, Ok, benchmark, catalog, components, embeddings, fitting, microscopy, mo, models, np, pl, prism, provenance, validation
+    import public_ui as ui
+    return Path, Error, Ok, benchmark, catalog, components, embeddings, fitting, microscopy, mo, models, np, pl, prism, provenance, validation, ui
 
 
 @app.cell
@@ -36,59 +37,79 @@ def _(Path, mo, prism, provenance, catalog, pl):
 
 
 @app.cell
-def _(catalog, counts, mo, pl, prism_result, ranked_result):
+def _(catalog, counts, mo, pl, prism_result, ranked_result, ui):
+    candidate_table = mo.ui.table(pl.DataFrame(), selection='single', show_data_types=False)
     if prism_result.is_error():
-        overview_view = mo.md(prism_result.error)
+        overview_view = ui.unavailable('PRISM data unavailable', prism_result.error)
     elif ranked_result.is_error():
-        overview_view = mo.md(ranked_result.error)
+        overview_view = ui.unavailable('Candidates unavailable', ranked_result.error)
     else:
         eligible_catalog, catalog_exclusions, excluded_curve_records = ranked_result.ok
         shortlist = eligible_catalog.head(100)
+        candidate_table = mo.ui.table(shortlist.select(
+            pl.col('name').alias('Compound'), pl.col('ccle_name').alias('Cell line'),
+            pl.col('ec50').alias('EC50 (μM)'), pl.col('slope').abs().alias('|Hill slope|'), pl.col('r2').alias('R²'),
+            'Screening Score', 'Response Category', 'broad_id', 'depmap_id', 'screen_id'),
+            selection='single', page_size=6, pagination=True, show_column_summaries=False, show_data_types=False,
+            hidden_columns=['broad_id','depmap_id','screen_id'], max_height=370,
+            format_mapping={'EC50 (μM)':'{:.4g}', '|Hill slope|':'{:.2f}', 'R²':'{:.3f}', 'Screening Score':'{:.2f}'},
+            header_tooltip={'Screening Score':'Absolute Hill slope × R². A descriptive ranking, without calibrated statistical meaning.'},
+            label='Ranked candidates')
         overview_view = mo.vstack([
-            mo.md('### Candidate screening'),
-            mo.ui.table(pl.DataFrame([counts]), selection=None),
-            mo.md(f'Showing {shortlist.height} highest-ranked curves from {eligible_catalog.height:,} eligible source-fit records.'),
-            mo.md('Screening Score = absolute fitted Hill slope × R². Extreme slopes can be unstable. Source-fit convergence and transition coverage have not been reverified.'),
-            mo.md(catalog.CATEGORY_NOTE),
-            mo.ui.table(shortlist.select(
-                pl.col('name').alias('Compound'), pl.col('ccle_name').alias('Cell line'), pl.col('primary_tissue').alias('Tissue'),
-                pl.col('ec50').alias('EC50 (μM)'), pl.col('slope').alias('Hill slope'), pl.col('r2').alias('R²'),
-                'Screening Score', 'Response Category', 'Fit diagnostics', 'broad_id', 'depmap_id', 'screen_id'), selection=None),
+            ui.metrics([('Observed curve records',f"{counts['raw_curve_records']:,}"),
+                        ('Compounds by name',f"{counts['compound_display_names']:,}"),
+                        ('Identified cell lines',f"{counts['cell_line_ids']:,}"),
+                        ('Eligible source fits',f'{eligible_catalog.height:,}')]),
+            mo.md('## Steep responses across the screen'),
+            mo.md('Explore the highest-ranked PRISM fits by potency and steepness. Each point is a compound, cell line and source screen.'),
+            mo.ui.plotly(ui.candidate_figure(eligible_catalog),config=ui.PLOT_CONFIG),
+            mo.md('## Ranked candidates'),
+            mo.md(f'Select a row, then open Drug Explorer to inspect its measured response. Showing 100 of {eligible_catalog.height:,} eligible source fits.'),
+            candidate_table,
             mo.hstack([
-                mo.download(eligible_catalog.write_csv().encode(), filename='eligible_catalog.csv', label='Export full eligible catalog'),
-                mo.download(shortlist.write_csv().encode(), filename='shortlist.csv', label='Export displayed shortlist'),
-            ]),
-            mo.accordion({'Sequential filter exclusions': mo.ui.table(catalog_exclusions, selection=None)}),
-        ])
-    return (overview_view,)
+                mo.download(lambda: eligible_catalog.write_csv().encode(),filename='eligible_catalog.csv',label='Download full catalog'),
+                mo.download(lambda: shortlist.write_csv().encode(),filename='shortlist.csv',label='Download shortlist'),
+            ],wrap=True),
+            mo.accordion({'Ranking and interpretation':mo.md(
+                'Screening score = absolute fitted Hill slope × R². Extreme slopes can be unstable. Source-fit convergence and dose coverage have not been reverified. '+catalog.CATEGORY_NOTE+
+                ' Static responses cannot establish irreversible cell-state switching.')}),
+        ],gap=1.25)
+    return candidate_table, overview_view
 
 
 @app.cell
-def _(mo, pl, prism_result):
+def _(candidate_table, mo, pl, prism_result):
     compound_rows = (prism_result.ok['curves'].select('broad_id', 'name').unique().collect().sort(['name', 'broad_id'])
                      if prism_result.is_ok() else pl.DataFrame(schema={'broad_id':pl.String,'name':pl.String}))
     compound_options = {f"{r['name']} · {r['broad_id']}": r['broad_id'] for r in compound_rows.iter_rows(named=True)}
     default_compound = next((label for label in compound_options if label.startswith('bortezomib ·')), next(iter(compound_options), None))
-    compound_select = mo.ui.dropdown(compound_options, value=default_compound, searchable=True, label='Compound')
+    if len(candidate_table.value):
+        default_compound = next((label for label,value in compound_options.items() if value == candidate_table.value['broad_id'][0]), default_compound)
+    compound_select = mo.ui.dropdown(compound_options, value=default_compound, searchable=True, label='Compound', full_width=True)
     return compound_select, compound_rows
 
 
 @app.cell
-def _(cell_metadata, compound_select, mo, pl, prism_result):
+def _(candidate_table, cell_metadata, compound_select, mo, pl, prism_result):
     tested = (prism_result.ok['curves'].filter(pl.col('broad_id') == compound_select.value).select('depmap_id').drop_nulls().unique().collect()
               if prism_result.is_ok() else pl.DataFrame(schema={'depmap_id':pl.String}))
     names = dict(cell_metadata.select('depmap_id','ccle_name').iter_rows()) if cell_metadata is not None else {}
     cell_options = {f'{names.get(key) or key} · {key}': key for key in sorted(tested['depmap_id'].drop_nulls())}
     default_cell = next((label for label in cell_options if 'RKO' in label), next(iter(cell_options), None))
-    cell_select = mo.ui.dropdown(cell_options, value=default_cell, searchable=True, label='Cell line')
+    if len(candidate_table.value) and candidate_table.value['broad_id'][0] == compound_select.value:
+        default_cell = next((label for label,value in cell_options.items() if value == candidate_table.value['depmap_id'][0]), default_cell)
+    cell_select = mo.ui.dropdown(cell_options, value=default_cell, searchable=True, label='Cell line', full_width=True)
     return (cell_select,)
 
 
 @app.cell
-def _(cell_select, compound_select, mo, pl, prism_result):
+def _(candidate_table, cell_select, compound_select, mo, pl, prism_result):
     screens = (prism_result.ok['curves'].filter((pl.col('broad_id') == compound_select.value) & (pl.col('depmap_id') == cell_select.value))
                .select('screen_id').unique().collect()['screen_id'].drop_nulls().sort().to_list() if prism_result.is_ok() else [])
-    screen_select = mo.ui.dropdown(screens, value=screens[0] if screens else None, label='Source screen')
+    selected_screen = screens[0] if screens else None
+    if len(candidate_table.value) and candidate_table.value['broad_id'][0] == compound_select.value and candidate_table.value['depmap_id'][0] == cell_select.value:
+        selected_screen = candidate_table.value['screen_id'][0]
+    screen_select = mo.ui.dropdown(screens, value=selected_screen, label='Screen', full_width=True)
     return (screen_select,)
 
 
@@ -121,9 +142,9 @@ def _(fitting, measurements, mo, np):
 @app.cell
 def _(measurements, mo):
     cursor_doses = sorted(measurements['dose'].unique().to_list()) if measurements is not None and measurements.height else []
-    concentration_cursor = mo.ui.dropdown(cursor_doses, value=cursor_doses[len(cursor_doses)//2] if cursor_doses else None, label='Concentration cursor (μM)')
-    run_prediction = mo.ui.run_button(label='Run configured TabPFN prediction')
-    run_benchmark = mo.ui.run_button(label='Evaluate held-out concentrations')
+    concentration_cursor = mo.ui.dropdown(cursor_doses, value=cursor_doses[len(cursor_doses)//2] if cursor_doses else None, label='Selected concentration (μM)', full_width=True)
+    run_prediction = mo.ui.run_button(label='Add TabPFN prediction')
+    run_benchmark = mo.ui.run_button(label='Evaluate this condition')
     return concentration_cursor, run_benchmark, run_prediction
 
 
@@ -152,31 +173,41 @@ def _(Error, measurements, mo, model_config, model_config_identity, models, np, 
 
 
 @app.cell
-def _(cell_select, components, compound_select, concentration_cursor, hill_fit, measurement_exclusions, measurement_result, measurements, mo, model_config, prediction_grid, run_benchmark, run_prediction, screen_select, tab_prediction):
+def _(cell_select, components, compound_rows, compound_select, concentration_cursor, hill_fit, measurement_result, measurements, mo, model_config, pl, prediction_grid, run_prediction, screen_select, tab_prediction, ui):
+    dose_figure = None
     if measurements is None or not measurements.height:
-        dose_content = mo.md(measurement_result.error if measurement_result.is_error() else 'No valid measurements; inspect input exclusions.')
+        dose_content = ui.unavailable('No response available', measurement_result.error if measurement_result.is_error() else 'No valid observations for this condition.')
     else:
-        dose_figure = components.build_drc_plot(measurements['dose'].to_numpy(), measurements['viability'].to_numpy(), prediction_grid,
+        selected_drug_name = compound_rows.filter(pl.col('broad_id') == compound_select.value)['name'][0]
+        dose_figure = ui.dose_figure(components.build_drc_plot(measurements['dose'].to_numpy(), measurements['viability'].to_numpy(), prediction_grid,
             hill_fit, tab_prediction.ok if tab_prediction.is_ok() else None,
-            concentration_cursor.value, compound_select.selected_key or '', cell_select.selected_key or '',
-            f"TabPFN {model_config.ok['model_version']} conditioned on observations" if model_config.is_ok() else None)
+            concentration_cursor.value, selected_drug_name, cell_select.selected_key or '',
+            f"TabPFN {model_config.ok['model_version']} prediction" if model_config.is_ok() else None))
+        fit_summary = ui.metrics([('EC50 (μM)',f'{hill_fit.ec50:.4g}'), ('Absolute Hill slope',f'{hill_fit.hill_slope:.2f}'),
+            ('R²',f'{hill_fit.r2:.3f}'), ('Measured observations',str(measurements.height))]) if hill_fit.status == 'ok' else ui.unavailable('Hill fit unavailable',hill_fit.reason)
         dose_content = mo.vstack([
-            mo.ui.plotly(dose_figure),
-            mo.md(f'Fit: {hill_fit.status}. ' + (hill_fit.reason or f'EC50 {hill_fit.ec50:.4g} μM; slope {hill_fit.hill_slope:.4g}; R² {hill_fit.r2:.4f}; RMSE {hill_fit.rmse:.4f}.')),
-            mo.md('; '.join(hill_fit.diagnostics.get('flags', [])) or 'No diagnostic flags recorded.'),
-            mo.md(tab_prediction.error if tab_prediction.is_error() else 'TabPFN predictions conditioned on this curve’s measured examples.'),
-            mo.download(measurement_result.ok.write_csv().encode(), filename='selected_measurements.csv', label='Export current observations, including missing responses'),
-            mo.accordion({'Excluded observations': measurement_exclusions}),
-        ])
+            mo.ui.plotly(dose_figure,config=ui.PLOT_CONFIG),
+            fit_summary,
+            mo.md('Circles show measured viability. The solid line is a Hill fit; the dashed blue line, when enabled, is a TabPFN prediction conditioned on these observations.'),
+            ui.controls([concentration_cursor,run_prediction]),
+            mo.md('TabPFN has not been evaluated for this condition. Select “Add TabPFN prediction” to run it.' if tab_prediction.is_error() and model_config.is_ok() and not run_prediction.value else (tab_prediction.error if tab_prediction.is_error() else 'TabPFN predictions are conditioned on the measured examples.')),
+            mo.hstack([
+                mo.download(lambda: measurement_result.ok.write_csv().encode(), filename='selected_measurements.csv',label='Download observations'),
+                mo.download(lambda: dose_figure.to_html(include_plotlyjs=True).encode(),filename='dose_response.html',label='Download interactive figure'),
+            ],wrap=True),
+            mo.accordion({'Fit interpretation and uncertainty':mo.md(
+                'EC50 is the midpoint of the fitted response span. The shaded EC20 to EC80 range describes 20% to 80% inhibition of that span. '
+                'It is not an uncertainty interval. Confidence intervals are unavailable because independent replicate units have not been established. '
+                + ('Fit cautions: '+ '; '.join(hill_fit.diagnostics.get('flags',[])) if hill_fit.diagnostics.get('flags') else '')
+            )}),
+        ],gap=1.25)
     drc_view = mo.vstack([
-        mo.md('### Dose–Response'),
-        mo.hstack([compound_select, cell_select, screen_select], wrap=True),
-        concentration_cursor,
-        mo.hstack([run_prediction, run_benchmark], wrap=True),
+        mo.md('## Drug Explorer'),
+        mo.md('Inspect a single PRISM compound, cell line and screen. Source screens remain separate.'),
+        ui.controls([compound_select,cell_select,screen_select]),
         dose_content,
-        mo.md('EC50 is the fitted response midpoint. EC20–EC80 describes inhibition of the fitted effect span, not absolute viability or uncertainty. Measurements remain separated by compound identifier and screen.'),
-    ])
-    return (drc_view,)
+    ],gap=1.25)
+    return dose_figure, drc_view
 
 
 @app.cell
@@ -198,14 +229,14 @@ def _(microscopy, mo, provenance, Path):
         return microscopy.load_metadata()
     image_metadata = read_image_metadata(image_identity)
     imaging_options = sorted(image_metadata.ok['Image_Metadata_Compound'].unique().to_list()) if image_metadata.is_ok() else []
-    imaging_compound = mo.ui.dropdown(imaging_options, value='taxol' if 'taxol' in imaging_options else next(iter(imaging_options), None), label='Imaging compound')
+    imaging_compound = mo.ui.dropdown(imaging_options, value='taxol' if 'taxol' in imaging_options else next(iter(imaging_options), None), label='Imaging compound', full_width=True)
     return image_metadata, imaging_compound
 
 
 @app.cell
 def _(image_metadata, imaging_compound, mo, pl):
     image_doses = sorted(image_metadata.ok.filter(pl.col('Image_Metadata_Compound') == imaging_compound.value)['Image_Metadata_Concentration'].drop_nulls().unique().to_list()) if image_metadata.is_ok() else []
-    imaging_dose = mo.ui.dropdown(image_doses, value=image_doses[len(image_doses)//2] if image_doses else None, label='Imaging concentration (μM)')
+    imaging_dose = mo.ui.dropdown(image_doses, value=image_doses[len(image_doses)//2] if image_doses else None, label='Concentration (μM)', full_width=True)
     return (imaging_dose,)
 
 
@@ -213,7 +244,7 @@ def _(image_metadata, imaging_compound, mo, pl):
 def _(image_metadata, imaging_compound, imaging_dose, mo, pl):
     field_rows = image_metadata.ok.filter((pl.col('Image_Metadata_Compound') == imaging_compound.value) & (pl.col('Image_Metadata_Concentration') == imaging_dose.value)) if image_metadata.is_ok() else None
     field_options = {f"Well {r['Image_Metadata_Well_DAPI']} · field {r['ImageNumber']} · replicate {r['Replicate']}":r['image_field_id'] for r in field_rows.iter_rows(named=True)} if field_rows is not None else {}
-    field_select = mo.ui.dropdown(field_options, value=next(iter(field_options), None), label='Image field')
+    field_select = mo.ui.dropdown(field_options, value=next(iter(field_options), None), label='Image field', full_width=True)
     return (field_select,)
 
 
@@ -227,34 +258,39 @@ def _(Error, embeddings, image_metadata, mo):
 
 
 @app.cell
-def _(components, field_select, image_metadata, imaging_compound, imaging_dose, microscopy, mo, pl, projection):
+def _(components, field_select, image_metadata, imaging_compound, imaging_dose, microscopy, mo, pl, projection, ui):
     image_parts = []
     if image_metadata.is_error():
-        image_parts.append(mo.md(image_metadata.error))
+        image_parts.append(ui.unavailable('Microscopy unavailable',image_metadata.error))
     elif field_select.value:
-        treated = image_metadata.ok.filter(pl.col('image_field_id') == field_select.value).row(0, named=True)
-        rgb = microscopy.load_microscopy_rgb('data/bbbc021/plate.zip', treated)
-        condition_label = 'Vehicle control (DMSO)' if treated['Image_Metadata_Compound'] == 'DMSO' else f"{treated['Image_Metadata_Compound']} · {treated['Image_Metadata_Concentration']} μM"
-        image_parts.append(mo.md(f"{condition_label} · {treated['image_field_id']}"))
-        image_parts.append(mo.image(rgb.ok, width=440, alt=f"Treated field: {treated['image_field_id']}") if rgb.is_ok() else mo.md(rgb.error))
-        control = microscopy.select_control(image_metadata.ok, treated)
+        treated = image_metadata.ok.filter(pl.col('image_field_id') == field_select.value).row(0,named=True)
+        rgb = microscopy.load_microscopy_rgb('data/bbbc021/plate.zip',treated)
+        condition_label = 'Vehicle control (DMSO)' if treated['Image_Metadata_Compound'] == 'DMSO' else f"{treated['Image_Metadata_Compound']} at {treated['Image_Metadata_Concentration']:g} μM"
+        treated_panel = mo.vstack([mo.md(f'### {condition_label}'),mo.image(rgb.ok,alt=condition_label) if rgb.is_ok() else mo.md(rgb.error),
+            mo.md(f"Well {treated['Image_Metadata_Well_DAPI']}, field {treated['ImageNumber']}")])
+        control = microscopy.select_control(image_metadata.ok,treated)
         if control.is_ok():
-            control_rgb = microscopy.load_microscopy_rgb('data/bbbc021/plate.zip', control.ok)
-            image_parts.append(mo.md(f"Vehicle control (DMSO) · {control.ok['image_field_id']}. Same plate and replicate group; acquisition matching beyond metadata unverified. First field by stable identifier."))
-            image_parts.append(mo.image(control_rgb.ok, width=440, alt='Vehicle control DMSO') if control_rgb.is_ok() else mo.md(control_rgb.error))
+            control_rgb = microscopy.load_microscopy_rgb('data/bbbc021/plate.zip',control.ok)
+            control_panel = mo.vstack([mo.md('### Vehicle control (DMSO)'),mo.image(control_rgb.ok,alt='Vehicle control DMSO') if control_rgb.is_ok() else mo.md(control_rgb.error),
+                mo.md(f"Well {control.ok['Image_Metadata_Well_DAPI']}, field {control.ok['ImageNumber']}")])
         else:
-            image_parts.append(mo.md(control.error))
+            control_panel = ui.unavailable('Control unavailable',control.error)
+        image_parts.append(mo.Html(f'<div class="atlas-compare"><div>{control_panel.text}</div><div>{treated_panel.text}</div></div>'))
+        image_parts.append(mo.md('Control and treated fields share a plate and replicate group. Further acquisition matching has not been verified. RGB contrast is adjusted independently for display.'))
     else:
-        image_parts.append(mo.md('No microscopy field for the selected condition.'))
-    image_parts.append(mo.md(projection.error) if projection.is_error() else mo.ui.plotly(components.build_umap_plot(projection.ok, imaging_compound.value, imaging_dose.value)))
+        image_parts.append(ui.unavailable('No field selected','Choose an available imaging compound and concentration.'))
+    if projection.is_error():
+        image_parts.append(ui.unavailable('Embedding map unavailable','The cached image representations lack verified model and preprocessing records. Cell-DINO attribution and UMAP are withheld until those records are established.'))
+    else:
+        image_parts.extend([mo.md('### Morphology map'),mo.ui.plotly(ui.figure(components.build_umap_plot(projection.ok,imaging_compound.value,imaging_dose.value)),config=ui.PLOT_CONFIG)])
     imaging_view = mo.vstack([
-        mo.md('### Cell Imaging'),
-        mo.md(f"Available metadata fields on Week1_22123: {image_metadata.ok.height if image_metadata.is_ok() else 'unavailable'}. Fields analyzed with verified embeddings: {projection.ok.height if projection.is_ok() else 'unavailable'}."),
-        mo.hstack([imaging_compound, imaging_dose, field_select], wrap=True),
+        mo.md('## Cell Explorer'),
+        mo.md('Compare BBBC021 microscopy fields from MCF-7 cells. These imaging conditions are separate from the PRISM viability screen.'),
+        ui.controls([imaging_compound,imaging_dose,field_select]),
         *image_parts,
-        mo.md('Contrast-adjusted RGB: red actin, green tubulin, blue DAPI. Raw intensities are unchanged. BBBC021 and PRISM observations are not paired.'),
-        mo.md('UMAP can distort distances and global geometry. Lines connect concentration-group centroids for visualization; they do not represent measured temporal trajectories. Clusters alone do not establish mechanisms.'),
-    ])
+        mo.accordion({'Channels and map interpretation':mo.md('Red: actin. Green: tubulin. Blue: DAPI. Raw image intensities are unchanged. '
+            'UMAP can distort distances and global geometry. Lines joining dose-group centroids do not represent measured time trajectories; clusters alone do not establish mechanisms.')}),
+    ],gap=1.25)
     return (imaging_view,)
 
 
@@ -265,47 +301,84 @@ def _(validation):
 
 
 @app.cell
-def _(benchmark, components, evaluation, external_result, mo, validation, pl):
-    validation_parts = [mo.md('### External dataset comparison')]
-    if external_result.is_error():
-        validation_parts.append(mo.md(external_result.error))
-    else:
-        matched, external_tables, external_counts, external_config = external_result.ok
-        validation_parts.extend([
-            mo.md(f'Matched conditions with identical metric definitions: {matched.height}'),
-            mo.ui.table(pl.DataFrame(external_counts), selection=None),
-            mo.ui.table(validation.compare_potencies(matched).ok, selection=None),
-            mo.ui.table(matched, selection=None),
-            mo.download(matched.write_csv().encode(), filename='matched_external_measurements.csv', label='Export matched measurements'),
-            mo.ui.plotly(components.build_validation_plot(matched, {'reference':external_config['reference']['source']['dataset'],'external':external_config['external']['source']['dataset']})),
-        ])
-    validation_parts.append(mo.md('### Held-out concentration prediction'))
-    if evaluation.is_error():
-        validation_parts.append(mo.md(evaluation.error))
-    else:
+def _(Path, benchmark, components, evaluation, external_result, mo, validation, pl, ui, run_benchmark, compound_select, cell_select, screen_select, methods_view, saved_benchmark):
+    validation_parts = [mo.md('## Validation'),mo.md('Evaluate prediction error within a measured curve, and inspect the scope and provenance of each comparison.')]
+    current_scope = f'{compound_select.value} / {cell_select.value} / {screen_select.value}'
+    validation_parts.extend([mo.md('### Held-out concentration prediction'),mo.md(f'Current Drug Explorer condition: `{current_scope}`.'),run_benchmark])
+    if run_benchmark.value and evaluation.is_error():
+        validation_parts.append(ui.unavailable('Current evaluation unavailable',evaluation.error))
+    if evaluation.is_ok():
         metrics = benchmark.aggregate_predictions(evaluation.ok)
-        validation_parts.extend([mo.ui.table(metrics.with_columns(pl.col('rmse', 'common_rmse').cast(pl.String).fill_null('Not evaluated')), selection=None), mo.ui.plotly(components.build_generalization_plot(metrics)),
-                                  mo.download(evaluation.ok.write_csv().encode(), filename='held_out_predictions.csv', label='Export predictions and failures')])
-    validation_parts.append(mo.md('Pooled observation RMSE weights curves by observation count. Common RMSE compares identical successful observations across models; failures remain counted. This evaluates held-out concentrations within the selected curve, not unseen compound–cell-line combinations. No transition-zone benchmark or significance test.'))
-    validation_view = mo.vstack(validation_parts)
+        evaluated_rows = evaluation.ok
+        benchmark_scope = 'Current condition'
+    elif saved_benchmark.is_ok():
+        metrics,evaluated_rows,recorded_manifest = saved_benchmark.ok
+        recorded_config = recorded_manifest['config']
+        benchmark_scope = f"Recorded condition: {recorded_config['compound_id']} / {recorded_config['cell_line_id']} / {recorded_config['screen_id']}"
+    else:
+        metrics = None
+        evaluated_rows = None
+        benchmark_scope = 'No verified benchmark is available. Evaluate the selected condition to calculate held-out prediction error.'
+    validation_parts.append(mo.md(benchmark_scope))
+    if metrics is not None:
+        validation_parts.extend([
+            mo.ui.plotly(ui.figure(components.build_generalization_plot(metrics)),config=ui.PLOT_CONFIG),
+            mo.md(f"Common RMSE uses {metrics['common_observations'].min()} observations successfully predicted by every evaluated model. This small sample does not establish general model performance."),
+            mo.accordion({'Model coverage and error':mo.ui.table(metrics.with_columns(pl.col('rmse','common_rmse').cast(pl.String).fill_null('Not evaluated')),selection=None,show_data_types=False,show_column_summaries=False)}),
+            mo.download(lambda: evaluated_rows.write_csv().encode(),filename='held_out_predictions.csv',label='Download predictions and failures'),
+        ])
+    validation_parts.extend([mo.md('### External dataset comparison'),
+        ui.unavailable('External evidence unavailable','GDSC2 and CTRPv2 source versions, potency definitions and identifier mappings have not been verified.') if external_result.is_error() else mo.md('Verified source measurements are available.')])
+    if external_result.is_ok():
+        matched,external_tables,external_counts,external_config = external_result.ok
+        validation_parts.extend([
+            mo.md(f'{matched.height:,} matched conditions with identical potency definitions.'),
+            mo.ui.plotly(ui.figure(components.build_validation_plot(matched,{'reference':external_config['reference']['source']['dataset'],'external':external_config['external']['source']['dataset']})),config=ui.PLOT_CONFIG),
+            mo.accordion({'Comparison methods and counts':mo.vstack([mo.ui.table(pl.DataFrame(external_counts),selection=None),mo.ui.table(validation.compare_potencies(matched).ok,selection=None)])}),
+            mo.download(lambda: matched.write_csv().encode(),filename='matched_external_measurements.csv',label='Download matched measurements'),
+        ])
+    validation_parts.extend([
+        mo.md('### Reproducibility'),
+        mo.md('Raw observations remain unchanged. Reported results carry source hashes, model identity, analysis settings and fold-level predictions.'),
+        mo.download(lambda: Path('METHODS.md').read_bytes(),filename='methods.md',label='Download methods and citations'),
+        mo.accordion({'Methods and citations':methods_view,'Evaluation scope':mo.md('All measurements at a held-out concentration stay in the same fold. Fits use training observations only. '
+            "Individual RMSE uses each model's successful predictions; common RMSE compares the same successful observations across all models. "
+            'Failures remain counted. These results concern concentrations within an observed curve; they do not measure unseen compound and cell-line combinations.')}),
+    ])
+    validation_view = mo.vstack(validation_parts,gap=1.25)
     return (validation_view,)
 
 
 @app.cell
 def _(Path, mo, provenance):
-    methods_view = mo.vstack([mo.md(Path('METHODS.md').read_text()), mo.ui.table([provenance.versions()], selection=None)])
+    methods_view = mo.md(Path('METHODS.md').read_text())
     return (methods_view,)
 
 
 @app.cell
-def _(drc_view, imaging_view, methods_view, mo, overview_view, validation_view):
+def _(drc_view, get_tab, imaging_view, mo, overview_view, set_tab, validation_view):
+    public_tabs = mo.ui.tabs({'Discoveries':overview_view,'Drug Explorer':drc_view,'Cell Explorer':imaging_view,'Validation':validation_view},value=get_tab(),on_change=set_tab,lazy=False)
     application_view = mo.vstack([
-        mo.md('# Phenotypic Drug-Response Atlas'),
-        mo.md('Drug response and cell morphology. Static dose responses do not establish irreversible cell-state switching.'),
-        mo.ui.tabs({'Overview': overview_view, 'Dose–Response': drc_view, 'Cell Imaging': imaging_view, 'Validation': validation_view, 'Methods': methods_view}),
-    ])
+        mo.Html('<header class="atlas-header"><h1>Phenotypic Drug-Response Atlas</h1><p>Explore drug sensitivity and cell morphology, with measurements and model predictions kept in view.</p></header>'),
+        public_tabs,
+    ],gap=1.5)
     application_view
-    return (application_view,)
+    return application_view, public_tabs
+
+
+@app.cell
+def _(mo, ui):
+    @mo.cache
+    def read_recorded_benchmark():
+        return ui.audited_benchmark()
+    saved_benchmark = read_recorded_benchmark()
+    return (saved_benchmark,)
+
+
+@app.cell
+def _(mo):
+    get_tab, set_tab = mo.state('Discoveries')
+    return get_tab, set_tab
 
 
 if __name__ == '__main__':

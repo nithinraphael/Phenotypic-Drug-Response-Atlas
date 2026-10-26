@@ -1,0 +1,47 @@
+:root { --atlas-ink:#163c3b; --atlas-muted:#526764; --atlas-measured:#176b62; --atlas-prediction:#315bbb; --atlas-candidate:#b66b13; }
+body { font-family:"PT Sans",system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif; font-size:16px; line-height:1.55; background:#f6f8f7; color:var(--atlas-ink); }
+marimo-notebook { max-width:1248px; margin-inline:auto; }
+#root { --text-primary:var(--atlas-ink); --text-secondary:var(--atlas-muted); }
+.atlas-header { padding:24px 0 20px; border-bottom:1px solid #dce5e1; margin-bottom:12px; }
+.atlas-header h1 { font-size:2rem; font-weight:650; letter-spacing:-.025em; line-height:1.2; margin:0 0 12px; }
+.atlas-header p { color:var(--atlas-muted); max-width:72ch; margin:0; font-size:1rem; line-height:1.65; }
+.atlas-metrics { display:grid; grid-template-columns:repeat(4,minmax(0,1fr)); gap:16px; margin:16px 0 24px; }
+.atlas-metrics > div { background:#fff; border:1px solid #dce5e1; border-radius:12px; padding:18px 20px; }
+.atlas-metrics strong { font-size:1.75rem; font-weight:600; font-variant-numeric:tabular-nums; display:block; line-height:1.3; }
+.atlas-metrics span { display:block; color:var(--atlas-muted); font-size:.875rem; margin-top:6px; }
+.atlas-compare { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:24px; }
+.atlas-compare > div { min-width:0; }
+.atlas-compare img { width:100%; height:auto; border-radius:12px; }
+.atlas-caption { color:var(--atlas-muted); font-size:.875rem; line-height:1.6; max-width:75ch; }
+.atlas-empty { padding:24px; background:#eef3f1; border:1px solid #dce5e1; border-radius:12px; }
+.atlas-empty h3 { margin:0 0 8px; font-size:1.125rem; }
+.atlas-empty p { margin:0; color:var(--atlas-muted); max-width:72ch; line-height:1.6; }
+.atlas-section { padding-block:12px; }
+marimo-ui-element { min-width:0; }
+:focus-visible { outline:2px solid #315bbb; outline-offset:3px; }
+::selection { background:#d4e8e1; color:#163c3b; }
+@media(max-width:700px) {
+ .atlas-header { padding-top:12px; }
+ .atlas-header h1 { font-size:1.65rem; }
+ .atlas-metrics { grid-template-columns:repeat(2,minmax(0,1fr)); gap:10px; }
+ .atlas-metrics > div { padding:14px; }
+ .atlas-metrics strong { font-size:1.4rem; }
+ .atlas-compare { grid-template-columns:1fr; gap:20px; }
+}
+
+[role="tab"] { min-height:44px; font-size:15px; }
+[role="tab"][aria-selected="true"] { color:#176b62; font-weight:600; }
+h2 { font-size:1.5rem; letter-spacing:-.015em; }
+
+.markdown, .markdown h1, .markdown h2, .markdown h3 { font-family:"PT Sans",system-ui,sans-serif; }
+.markdown h2 { margin-block:20px 8px; font-size:1.5rem; font-weight:600; }
+.markdown h3 { font-size:1.125rem; font-weight:600; }
+.atlas-controls { display:grid; grid-template-columns:repeat(auto-fit,minmax(min(100%,240px),1fr)); gap:16px; align-items:end; }
+select, button:not([role="tab"]), input { min-height:42px; font-size:16px; }
+select { border-radius:8px; padding-inline:10px; }
+@media(max-width:700px) {
+ [role="tablist"] { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); width:100%; max-height:none; overflow:visible; }
+ [role="tab"] { padding:10px; font-size:14px; }
+}
+
+.marimo-cell.published, .mathjax_ignore.bg-background { background-color:#f6f8f7; }
