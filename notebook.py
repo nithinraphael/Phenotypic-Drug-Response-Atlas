@@ -14,7 +14,9 @@ def _():
     from analysis import benchmark, catalog, embeddings, fitting, microscopy, models, prism, provenance, validation
     import components
     import public_ui as ui
-    return Path, Error, Ok, benchmark, catalog, components, embeddings, fitting, microscopy, mo, models, np, pl, prism, provenance, validation, ui
+    import image_projection
+    import external_evidence
+    return Path, Error, Ok, benchmark, catalog, components, embeddings, fitting, microscopy, mo, models, np, pl, prism, provenance, validation, ui, image_projection, external_evidence
 
 
 @app.cell
@@ -168,7 +170,8 @@ def _(Error, measurements, mo, model_config, model_config_identity, models, np, 
     elif measurements is None or not measurements.height:
         tab_prediction = Error('No valid observations for prediction')
     else:
-        tab_prediction = predict_selected(tuple(measurements['dose']), tuple(measurements['viability']), tuple(prediction_grid), model_config_identity, model_config.ok)
+        with mo.status.spinner(title=f"Running TabPFN {model_config.ok['model_version']} prediction"):
+            tab_prediction = predict_selected(tuple(measurements['dose']), tuple(measurements['viability']), tuple(prediction_grid), model_config_identity, model_config.ok)
     return (tab_prediction,)
 
 
@@ -190,7 +193,16 @@ def _(cell_select, components, compound_rows, compound_select, concentration_cur
             fit_summary,
             mo.md('Circles show measured viability. The solid line is a Hill fit; the dashed blue line, when enabled, is a TabPFN prediction conditioned on these observations.'),
             ui.controls([concentration_cursor,run_prediction]),
-            mo.md('TabPFN has not been evaluated for this condition. Select “Add TabPFN prediction” to run it.' if tab_prediction.is_error() and model_config.is_ok() and not run_prediction.value else (tab_prediction.error if tab_prediction.is_error() else 'TabPFN predictions are conditioned on the measured examples.')),
+            mo.md('TabPFN has not been evaluated for this condition. Select “Add TabPFN prediction” to run it.' if tab_prediction.is_error() and model_config.is_ok() and not run_prediction.value else (tab_prediction.error if tab_prediction.is_error() else f"TabPFN {model_config.ok['model_version']}: {len(tab_prediction.ok)} predictions, conditioned on {measurements.height} measured examples. Features: {model_config.ok['feature_definition']}.")),
+            mo.md('Built with PriorLabs-TabPFN. [Model license](https://huggingface.co/Prior-Labs/TabPFN-v2-reg/blob/main/LICENSE.txt).'),
+            mo.accordion({'Prediction model and license':mo.md('Pretrained [TabPFN v2 by Prior Labs](https://huggingface.co/Prior-Labs/TabPFN-v2-reg). '
+                'Weights use the [Prior Labs license](https://huggingface.co/Prior-Labs/TabPFN-v2-reg/blob/main/LICENSE.txt), including attribution requirements. '
+                'The configured checkpoint is verified by SHA-256; inference uses CPU and log10 concentration. No task-specific weight training is performed.')}),
+            mo.download(lambda: pl.DataFrame({'dose_um':prediction_grid,'predicted_relative_viability':tab_prediction.ok}).with_columns(
+                pl.lit(compound_select.value).alias('compound_id'),pl.lit(cell_select.value).alias('cell_line_id'),pl.lit(screen_select.value).alias('screen_id'),
+                pl.lit(model_config.ok['model_version']).alias('model_version'),pl.lit(model_config.ok['checkpoint_sha256']).alias('checkpoint_sha256'),
+                pl.lit(model_config.ok['feature_definition']).alias('feature_definition')).write_csv().encode(),
+                filename='tabpfn_predictions.csv',label='Download TabPFN predictions') if tab_prediction.is_ok() else mo.md(''),
             mo.hstack([
                 mo.download(lambda: measurement_result.ok.write_csv().encode(), filename='selected_measurements.csv',label='Download observations'),
                 mo.download(lambda: dose_figure.to_html(include_plotlyjs=True).encode(),filename='dose_response.html',label='Download interactive figure'),
@@ -222,44 +234,48 @@ def _(Error, benchmark, measurements, run_benchmark, cell_select, compound_selec
 
 
 @app.cell
-def _(microscopy, mo, provenance, Path):
+def _(microscopy, mo, provenance, Path, get_map_selection, pl):
     image_identity = tuple((str(p), provenance.sha256(p)) for p in [Path('data/bbbc021/metadata.csv')] if p.is_file())
     @mo.cache
     def read_image_metadata(identity):
         return microscopy.load_metadata()
     image_metadata = read_image_metadata(image_identity)
     imaging_options = sorted(image_metadata.ok['Image_Metadata_Compound'].unique().to_list()) if image_metadata.is_ok() else []
-    imaging_compound = mo.ui.dropdown(imaging_options, value='taxol' if 'taxol' in imaging_options else next(iter(imaging_options), None), label='Imaging compound', full_width=True)
-    return image_metadata, imaging_compound
+    mapped_field = image_metadata.ok.filter(pl.col('image_field_id') == get_map_selection()) if image_metadata.is_ok() and get_map_selection() else None
+    mapped_row = mapped_field.row(0,named=True) if mapped_field is not None and mapped_field.height == 1 else None
+    imaging_compound = mo.ui.dropdown(imaging_options, value=mapped_row['Image_Metadata_Compound'] if mapped_row else ('taxol' if 'taxol' in imaging_options else next(iter(imaging_options), None)), label='Imaging compound', full_width=True)
+    return image_metadata, imaging_compound, mapped_row
 
 
 @app.cell
-def _(image_metadata, imaging_compound, mo, pl):
+def _(image_metadata, imaging_compound, mo, pl, mapped_row):
     image_doses = sorted(image_metadata.ok.filter(pl.col('Image_Metadata_Compound') == imaging_compound.value)['Image_Metadata_Concentration'].drop_nulls().unique().to_list()) if image_metadata.is_ok() else []
-    imaging_dose = mo.ui.dropdown(image_doses, value=image_doses[len(image_doses)//2] if image_doses else None, label='Concentration (μM)', full_width=True)
+    imaging_dose = mo.ui.dropdown(image_doses, value=mapped_row['Image_Metadata_Concentration'] if mapped_row and mapped_row['Image_Metadata_Compound'] == imaging_compound.value else (image_doses[len(image_doses)//2] if image_doses else None), label='Concentration (μM)', full_width=True)
     return (imaging_dose,)
 
 
 @app.cell
-def _(image_metadata, imaging_compound, imaging_dose, mo, pl):
+def _(image_metadata, imaging_compound, imaging_dose, mo, pl, mapped_row):
     field_rows = image_metadata.ok.filter((pl.col('Image_Metadata_Compound') == imaging_compound.value) & (pl.col('Image_Metadata_Concentration') == imaging_dose.value)) if image_metadata.is_ok() else None
     field_options = {f"Well {r['Image_Metadata_Well_DAPI']} · field {r['ImageNumber']} · replicate {r['Replicate']}":r['image_field_id'] for r in field_rows.iter_rows(named=True)} if field_rows is not None else {}
-    field_select = mo.ui.dropdown(field_options, value=next(iter(field_options), None), label='Image field', full_width=True)
+    default_field = next((label for label,value in field_options.items() if mapped_row and value == mapped_row['image_field_id']),next(iter(field_options),None))
+    field_select = mo.ui.dropdown(field_options, value=default_field, label='Image field', full_width=True)
     return (field_select,)
 
 
 @app.cell
-def _(Error, embeddings, image_metadata, mo):
+def _(Error, image_projection, image_metadata, mo):
     @mo.cache
     def read_projection(metadata):
-        return embeddings.configured_projection(metadata)
+        return image_projection.load_projection(metadata)
     projection = read_projection(image_metadata.ok) if image_metadata.is_ok() else Error(image_metadata.error)
     return (projection,)
 
 
 @app.cell
-def _(components, field_select, image_metadata, imaging_compound, imaging_dose, microscopy, mo, pl, projection, ui):
+def _(components, field_select, image_metadata, imaging_compound, imaging_dose, microscopy, mo, pl, projection, ui, map_color, set_map_selection):
     image_parts = []
+    map_plot = None
     if image_metadata.is_error():
         image_parts.append(ui.unavailable('Microscopy unavailable',image_metadata.error))
     elif field_select.value:
@@ -280,9 +296,17 @@ def _(components, field_select, image_metadata, imaging_compound, imaging_dose, 
     else:
         image_parts.append(ui.unavailable('No field selected','Choose an available imaging compound and concentration.'))
     if projection.is_error():
-        image_parts.append(ui.unavailable('Embedding map unavailable','The cached image representations lack verified model and preprocessing records. Cell-DINO attribution and UMAP are withheld until those records are established.'))
+        image_parts.append(ui.unavailable('Embedding map unavailable',projection.error))
     else:
-        image_parts.extend([mo.md('### Morphology map'),mo.ui.plotly(ui.figure(components.build_umap_plot(projection.ok,imaging_compound.value,imaging_dose.value)),config=ui.PLOT_CONFIG)])
+        _map_figure = ui.morphology_figure(projection.ok,imaging_compound.value,imaging_dose.value,map_color.value)
+        map_plot = mo.ui.plotly(_map_figure,config=ui.PLOT_CONFIG,
+            on_change=lambda points: set_map_selection(field) if (field := ui.selected_image_field(points,_map_figure)) else None)
+        image_parts.extend([mo.md('### Image-field morphology map'),map_color,
+            map_plot.style({'display':'grid','height':'600px'}),
+            mo.md(f"{projection.ok.height} image fields. Select a point to inspect its microscopy field. DINO ViT-S/8 uses ImageNet weights on fluorescence composites; this exploratory baseline is not Cell-DINO or an individual-cell measurement. "
+                '[Cell-DINO weights](https://ai.meta.com/resources/models-and-libraries/cell-dino-downloads/) and compatible channel preprocessing are still required.'),
+            mo.download(lambda: projection.ok.select('image_field_id','Image_Metadata_Compound','Image_Metadata_Concentration','umap_1','umap_2','model_id').write_csv().encode(),filename='image_field_projection.csv',label='Download map coordinates'),
+        ])
     imaging_view = mo.vstack([
         mo.md('## Cell Explorer'),
         mo.md('Compare BBBC021 microscopy fields from MCF-7 cells. These imaging conditions are separate from the PRISM viability screen.'),
@@ -291,17 +315,18 @@ def _(components, field_select, image_metadata, imaging_compound, imaging_dose, 
         mo.accordion({'Channels and map interpretation':mo.md('Red: actin. Green: tubulin. Blue: DAPI. Raw image intensities are unchanged. '
             'UMAP can distort distances and global geometry. Lines joining dose-group centroids do not represent measured time trajectories; clusters alone do not establish mechanisms.')}),
     ],gap=1.25)
-    return (imaging_view,)
+    return imaging_view, map_plot
 
 
 @app.cell
-def _(validation):
+def _(validation, external_evidence):
     external_result = validation.load_configured_validation()
-    return (external_result,)
+    external_inventory = external_evidence.source_inventory()
+    return external_result, external_inventory
 
 
 @app.cell
-def _(Path, benchmark, components, evaluation, external_result, mo, validation, pl, ui, run_benchmark, compound_select, cell_select, screen_select, methods_view, saved_benchmark):
+def _(Path, benchmark, components, evaluation, external_result, external_inventory, mo, validation, pl, ui, run_benchmark, compound_select, cell_select, screen_select, methods_view, saved_benchmark):
     validation_parts = [mo.md('## Validation'),mo.md('Evaluate prediction error within a measured curve, and inspect the scope and provenance of each comparison.')]
     current_scope = f'{compound_select.value} / {cell_select.value} / {screen_select.value}'
     validation_parts.extend([mo.md('### Held-out concentration prediction'),mo.md(f'Current Drug Explorer condition: `{current_scope}`.'),run_benchmark])
@@ -328,7 +353,15 @@ def _(Path, benchmark, components, evaluation, external_result, mo, validation, 
             mo.download(lambda: evaluated_rows.write_csv().encode(),filename='held_out_predictions.csv',label='Download predictions and failures'),
         ])
     validation_parts.extend([mo.md('### External dataset comparison'),
-        ui.unavailable('External evidence unavailable','GDSC2 and CTRPv2 source versions, potency definitions and identifier mappings have not been verified.') if external_result.is_error() else mo.md('Verified source measurements are available.')])
+        ui.unavailable('Cross-dataset comparison unavailable',external_result.error+' Reviewed compound/cell-line crosswalks and comparable potency definitions are required. Correlations, intervals and replication classifications have not been calculated.') if external_result.is_error() else mo.md('Verified source measurements are available.'),
+        mo.accordion({'External source records and blockers':mo.vstack([
+            mo.ui.table(external_inventory,selection=None,show_data_types=False,show_column_summaries=False),
+            mo.md('[GDSC release 8.2 archive](https://ftp.sanger.ac.uk/pub/project/cancerrxgene/releases/release-8.2/) · '
+                '[GDSC assay and metric definitions](https://depmap.sanger.ac.uk/documentation/datasets/drug-sensitivity/). '
+                'GDSC natural-log IC50 uses μM. PRISM EC50 describes a fitted response midpoint; equal potency definitions have not been established. CTRPv2 processing provenance remains unresolved.'),
+            mo.download(lambda: external_inventory.write_csv().encode(),filename='external_source_inventory.csv',label='Download external source inventory'),
+        ])}),
+    ])
     if external_result.is_ok():
         matched,external_tables,external_counts,external_config = external_result.ok
         validation_parts.extend([
@@ -379,6 +412,13 @@ def _(mo, ui):
 def _(mo):
     get_tab, set_tab = mo.state('Discoveries')
     return get_tab, set_tab
+
+
+@app.cell
+def _(mo):
+    get_map_selection, set_map_selection = mo.state(None)
+    map_color = mo.ui.dropdown(['Concentration','Compound'],value='Concentration',label='Map color')
+    return get_map_selection, set_map_selection, map_color
 
 
 if __name__ == '__main__':

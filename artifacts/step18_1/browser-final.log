@@ -1,0 +1,18 @@
+PASS Four public tabs load
+PASS Shortlist and full catalog downloads
+PASS Candidate selection updates compound, cell and screen
+PASS Compound identifier updates source screen
+PASS Searchable compound and cell selectors
+PASS Real configured TabPFN prediction and source-labeled export
+PASS Cursor updates annotation and preserves prediction
+PASS Current observations, HTML and SVG figure downloads
+PASS Plot zoom/reset and uncertainty disclosure
+PASS Verified 240-field DINO map, both colors, click-to-microscopy linking and export
+PASS Microscopy interpretation disclosure
+PASS Imaging selection does not alter PRISM condition
+PASS Live concentration benchmark and matching export
+PASS External source provenance, unresolved comparison and matching inventory export
+PASS Coverage, methods, scope and citation download
+PASS desktop navigation, rendering and no horizontal overflow
+PASS mobile navigation, rendering and no horizontal overflow
+PASS No browser JavaScript errors

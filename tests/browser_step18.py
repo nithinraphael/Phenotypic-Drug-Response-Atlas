@@ -8,7 +8,7 @@ from tempfile import TemporaryDirectory
 
 from playwright.sync_api import sync_playwright
 
-ROOT = Path('artifacts/step18')
+ROOT = Path('artifacts/step18_1')
 ROOT.mkdir(parents=True,exist_ok=True)
 checks=[]
 
@@ -49,7 +49,7 @@ with sync_playwright() as playwright,TemporaryDirectory() as directory:
     page=browser.new_page(viewport={'width':1440,'height':1050},device_scale_factor=1)
     errors=[]
     page.on('pageerror',lambda error:errors.append(str(error)))
-    page.goto('http://127.0.0.1:2724',wait_until='domcontentloaded')
+    page.goto('http://127.0.0.1:2732',wait_until='domcontentloaded')
     page.get_by_role('tab',name='Discoveries',exact=True).wait_for(timeout=90000)
     page.locator('tbody tr').first.wait_for(timeout=90000)
     assert page.get_by_role('tab').all_text_contents()==['Discoveries','Drug Explorer','Cell Explorer','Validation']
@@ -80,7 +80,14 @@ with sync_playwright() as playwright,TemporaryDirectory() as directory:
     plot=wait_plot(page,"e=>e.data.some(t=>t.name.includes('TabPFN'))")
     predicted=plot.evaluate("e=>Array.from(e._fullData.find(t=>t.name.includes('TabPFN')).y)")
     assert len(predicted)==120 and all(isinstance(value,(int,float)) for value in predicted)
-    passed('Real configured TabPFN prediction')
+    prediction_file=download(page,'Download TabPFN predictions',directory)
+    exported=list(csv.DictReader(prediction_file.open()))
+    assert len(exported)==120
+    assert [float(row['predicted_relative_viability']) for row in exported]==predicted
+    assert {row['model_version'] for row in exported}=={'v2'}
+    (ROOT/'tabpfn-browser-predictions.csv').write_bytes(prediction_file.read_bytes())
+    page.get_by_text('Built with PriorLabs-TabPFN.',exact=False).filter(visible=True).wait_for()
+    passed('Real configured TabPFN prediction and source-labeled export')
     cursor=page.locator('select:visible').last
     selected=cursor.locator('option').first.get_attribute('value')
     cursor.select_option(selected)
@@ -127,8 +134,30 @@ with sync_playwright() as playwright,TemporaryDirectory() as directory:
     page.wait_for_timeout(300)
     assert page.locator('img:visible').count()==2
     assert page.locator('img:visible').evaluate_all('(images)=>images.every(image=>image.naturalWidth>0&&image.alt.length>0)')
-    page.get_by_role('heading',name='Embedding map unavailable').wait_for()
-    passed('Imaging compound, dose, field, controls and honest map state')
+    page.get_by_role('heading',name='Image-field morphology map').wait_for()
+    plot=wait_plot(page,"e=>e.layout.title.text.includes('DINO ViT-S/8')")
+    coords=download(page,'Download map coordinates',directory)
+    fields=list(csv.DictReader(coords.open()))
+    assert len(fields)==240 and len({row['image_field_id'] for row in fields})==240
+    page.locator('select:visible').last.select_option(label='Compound')
+    plot=wait_plot(page,"e=>e.data.some(t=>t.name==='aphidicolin')")
+    plot.scroll_into_view_if_needed()
+    point=plot.evaluate("""e=>{const t=e._fullData.find(t=>t.name==='aphidicolin'); return {id:t.customdata[0][0],x:e._fullLayout.xaxis.l2p(t.x[0])+e._fullLayout.xaxis._offset,y:e._fullLayout.yaxis.l2p(t.y[0])+e._fullLayout.yaxis._offset,dose:t.customdata[0][2]}}""")
+    bounds=plot.bounding_box()
+    page.mouse.click(bounds['x']+point['x'],bounds['y']+point['y'])
+    page.get_by_role('heading',name=f"aphidicolin at {point['dose']:g} μM",exact=True).wait_for(timeout=60000)
+    metadata=list(csv.DictReader(Path('data/bbbc021/metadata.csv').open()))
+    row=next(r for r in metadata if r['Image_Metadata_Plate_DAPI']+'/'+r['Image_FileName_DAPI']==point['id'])
+    page.get_by_text(f"Well {row['Image_Metadata_Well_DAPI']}, field {row['ImageNumber']}",exact=True).filter(visible=True).wait_for(timeout=60000)
+    assert page.locator('img:visible').count()==2
+    for device,width,height in [('desktop',1440,1050),('mobile',390,844)]:
+        page.set_viewport_size({'width':width,'height':height})
+        plot=wait_plot(page,"e=>e.layout.title.text.includes('DINO ViT-S/8')")
+        plot.scroll_into_view_if_needed()
+        page.wait_for_timeout(500)
+        plot.screenshot(path=str(ROOT/('map-'+device+'.png')))
+    page.set_viewport_size({'width':1440,'height':1050})
+    passed('Verified 240-field DINO map, both colors, click-to-microscopy linking and export')
     page.get_by_role('button',name='Channels and map interpretation').click()
     passed('Microscopy interpretation disclosure')
     page.get_by_role('tab',name='Drug Explorer',exact=True).click()
@@ -149,6 +178,16 @@ with sync_playwright() as playwright,TemporaryDirectory() as directory:
     page.get_by_role('button',name='Methods and citations',exact=True).click()
     method=download(page,'Download methods and citations',directory)
     assert method.read_bytes()==Path('METHODS.md').read_bytes()
+    page.get_by_role('button',name='External source records and blockers',exact=True).click()
+    page.get_by_text(re.compile(r'^135,?242$')).filter(visible=True).wait_for(timeout=30000)
+    inventory=download(page,'Download external source inventory',directory)
+    sources=list(csv.DictReader(inventory.open()))
+    assert sources[0]['Records']=='135242' and sources[1]['Records']=='16729'
+    assert sources[0]['Release']=='8.2 / 25Feb20'
+    page.get_by_role('heading',name='Cross-dataset comparison unavailable',exact=True).wait_for()
+    page.get_by_role('heading',name='Cross-dataset comparison unavailable',exact=True).scroll_into_view_if_needed()
+    page.screenshot(path=str(ROOT/'external-provenance-desktop.png'))
+    passed('External source provenance, unresolved comparison and matching inventory export')
     passed('Coverage, methods, scope and citation download')
     for width,height,device in [(1440,1050,'desktop'),(390,844,'mobile')]:
         page.set_viewport_size({'width':width,'height':height})

@@ -1,0 +1,31 @@
+{
+  "local_file": "data/gdsc/GDSC2_fitted_dose_response.csv",
+  "local_sha256": "0883b3ef6e440603094c43c74044e1d333fce61e92e3efa374ea3a54f0b50302",
+  "official_file": "data/gdsc/verified_source/GDSC2_fitted_dose_response_25Feb20.csv",
+  "official_sha256": "1a4906f18be89a1f06e50c68ccae75db91fcdfffe7c97e21c72f88b5dda7d5b5",
+  "release": "8.2 / 25Feb20",
+  "record_key": "NLME_CURVE_ID",
+  "rows": 135242,
+  "comparison": "All columns match after NA/empty normalization and sorting; numerical absolute tolerance 1e-12",
+  "column_checks": {
+    "DATASET": true,
+    "NLME_RESULT_ID": true,
+    "NLME_CURVE_ID": true,
+    "COSMIC_ID": true,
+    "CELL_LINE_NAME": true,
+    "SANGER_MODEL_ID": true,
+    "TCGA_DESC": true,
+    "DRUG_ID": true,
+    "DRUG_NAME": true,
+    "PUTATIVE_TARGET": true,
+    "PATHWAY_NAME": true,
+    "COMPANY_ID": true,
+    "WEBRELEASE": true,
+    "MIN_CONC": true,
+    "MAX_CONC": true,
+    "LN_IC50": true,
+    "AUC": true,
+    "RMSE": true,
+    "Z_SCORE": true
+  }
+}

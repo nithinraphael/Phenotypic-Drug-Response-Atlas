@@ -10,7 +10,8 @@
     "path": "/home/ronaldo/.cache/torch/hub/checkpoints/dino_deitsmall8_pretrain.pth",
     "bytes": 86728949,
     "sha256": "55c8b267f479b614ec20858947ce361ba804846c193e20be74263a096bb6d75e",
-    "status": "present cached weights; authoritative identity not yet authenticated, no automatic use"
+    "status": "Official downloaded DINO ViT-S/8 weights match cached SHA-256 exactly; explicit ImageNet baseline recomputed on BBBC021 fields",
+    "source_url": "https://dl.fbaipublicfiles.com/dino/dino_deitsmall8_pretrain/dino_deitsmall8_pretrain.pth"
   },
   {
     "path": "/home/ronaldo/.cache/torch/hub/checkpoints/dinov2_vits14_pretrain.pth",

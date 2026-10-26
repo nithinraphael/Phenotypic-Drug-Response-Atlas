@@ -91,3 +91,24 @@ The earlier results above remain the repair baseline. The redesigned public app 
 - `git diff --check` and compilation passed. Raw input hashes and shared scientific/dependency sources remain unchanged; preservation.json records the original notebook copy hash.
 
 Browser/render evidence and scoped design review are in artifacts/step18. All prior unexecuted-analysis limitations still apply except the browser/native-SVG and marimo-CLI checks now demonstrated here. Cross-browser, screen-reader and static Kaleido PNG evaluation were not run.
+
+## Step 18.1
+
+Environment: pinned Python environment from pyproject.toml/uv.lock; exact versions in the recovery/cache/run manifests. CPU execution; no CUDA device available.
+
+| Command / check | Actual result |
+|---|---|
+| MPLCONFIGDIR=/tmp/atlas-matplotlib .venv/bin/python -m unittest discover -s tests -v | 73 passed, 0 failed, 0 skipped; 64.368 seconds |
+| uv run marimo check notebook.py | Exit 0 on final source, outside sandbox |
+| uv run python notebook.py | Complete notebook exit 0, outside sandbox |
+| .venv/bin/python tests/check_notebooks.py | All 16 installed rules passed on all 3 notebooks |
+| uv run --no-project --offline --with playwright python tests/browser_step18.py | 18 groups passed; desktop 1440×1050/mobile 390×844; no JavaScript errors |
+| Focused source-table hydration check | Passed; 135,242 visible and both dataset rows captured |
+| Compileall / git diff --check | Passed |
+| Original data/cache hash audit | All 16 unchanged |
+
+Browser checks ran real TabPFN v2 inference and held-out evaluation, verified plotted/exported prediction equality, both map color modes, a physical mouse click through native Plotly selection, exact microscopy field synchronization, PRISM independence, downloads, navigation and responsive geometry. Native grid containment was separately measured at 600px after mobile resize. Final visual captures and browser-results.json are in artifacts/step18_1.
+
+Earlier failing attempts are retained: 65-test baseline with 3 failures; 71-test follow-up with 1 report-reconciliation failure; browser attempts exposing map callback/payload and mobile containment defects. Final checks supersede these after targeted repairs. A source-table screenshot initially preceded hydration; the focused check and recapture resolved that evidence issue.
+
+Not executed: Cell-DINO inference (no approved checkpoint/channel compatibility), cross-dataset correlations/intervals/replication classification (missing reviewed mappings and CTRP processing provenance), GPU performance (CUDA unavailable), cross-browser, physical mobile touch and screen-reader checks. These are limitations, not passed tests. See STEP18_1_RECOVERY.md.

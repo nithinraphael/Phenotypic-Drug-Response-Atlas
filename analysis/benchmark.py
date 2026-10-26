@@ -82,7 +82,7 @@ def aggregate_predictions(predictions):
     for model in models:
         all_rows = predictions.filter(pl.col('model') == model)
         valid = successes.filter(pl.col('model') == model)
-        matched = valid.join(common, on=['curve_id', 'fold', 'observation_id'], how='inner')
+        matched = valid.join(common, on=['curve_id', 'fold', 'observation_id'], how='inner', maintain_order='left')
         rows.append(dict(model=model, model_version=all_rows['model_version'].unique().item(),
                          package_version=importlib.metadata.version(package[model]), checkpoint_sha256=all_rows['checkpoint_sha256'].unique().item(),
                          curves=all_rows['curve_id'].n_unique(), folds=all_rows.select('curve_id', 'fold').unique().height,

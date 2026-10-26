@@ -1,0 +1,34 @@
+{
+  "status": "passed",
+  "checks": [
+    "Four public tabs load",
+    "Shortlist and full catalog downloads",
+    "Candidate selection updates compound, cell and screen",
+    "Compound identifier updates source screen",
+    "Searchable compound and cell selectors",
+    "Real configured TabPFN prediction and source-labeled export",
+    "Cursor updates annotation and preserves prediction",
+    "Current observations, HTML and SVG figure downloads",
+    "Plot zoom/reset and uncertainty disclosure",
+    "Verified 240-field DINO map, both colors, click-to-microscopy linking and export",
+    "Microscopy interpretation disclosure",
+    "Imaging selection does not alter PRISM condition",
+    "Live concentration benchmark and matching export",
+    "External source provenance, unresolved comparison and matching inventory export",
+    "Coverage, methods, scope and citation download",
+    "desktop navigation, rendering and no horizontal overflow",
+    "mobile navigation, rendering and no horizontal overflow",
+    "No browser JavaScript errors"
+  ],
+  "javascript_errors": [],
+  "viewports": [
+    [
+      1440,
+      1050
+    ],
+    [
+      390,
+      844
+    ]
+  ]
+}

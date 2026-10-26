@@ -185,3 +185,7 @@ Existing microscopy images fill their columns without changing aspect ratio. Cap
 - **Don't** imply PRISM viability and BBBC021 microscopy are paired assays.
 - **Don't** add decorative imagery or custom JavaScript to this interface.
 - **Don't** manufacture unavailable uncertainty, embeddings or external comparisons.
+
+## Step 18.1 restored states
+
+The existing design remains unchanged. The image-field map uses a two-line model/condition title, native Plotly color legends and a 600px grid wrapper to preserve interactive bounds across desktop/mobile resize. Points link to the exact microscopy field; captions identify the ImageNet baseline and unavailable Cell-DINO evidence. Prediction exports sit beside measured-observation downloads with Prior Labs attribution. The external source inventory remains inside a disclosure beside explicit comparison blockers.

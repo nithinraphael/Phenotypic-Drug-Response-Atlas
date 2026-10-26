@@ -54,3 +54,23 @@ Additional evidence files: TEST_EXECUTION.log records actual named test outcomes
 | TEST_RESULTS.md, REMAINING_BLOCKERS.md | Append current UI checks and mark resolved tooling limitations | Earlier scientific limitations and repair results retained |
 
 Scientific analysis modules, components.py, dependencies, model configuration, raw observations and audited run outputs were not changed.
+
+## Step 18.1
+
+| File | Change and reason | Compatibility |
+|---|---|---|
+| notebook.py | Connect verified image projection; native point selection updates compound/dose/field; show exact external ingestion failure and source inventory; add TabPFN loading, attribution, success and CSV export | Four public tabs retained; no Cell-DINO substitution or unverified comparisons |
+| public_ui.py | Wrap existing UMAP builder with dose/compound color and stable field metadata; resolve native trace/point indices to field IDs; load newly reconciled recorded benchmark | Existing figure/numerical builders unchanged |
+| image_projection.py | Explicit, bounded DINO baseline extraction and UMAP generation; complete input verification before cache use | New verified cache only; legacy caches unchanged; CPU run, explicit CUDA option |
+| external_evidence.py | Hash-check source records and compute availability/counts without inferring cross-dataset matches | Source inventory is separate from validation results |
+| config/dino_baseline.json | Verified checkpoint and official executable source hashes, baseline identity/license | Machine-local checkpoint path |
+| config/external_sources.json | Official GDSC release URL/hash and unresolved local CTRP provenance | Does not enable comparison by itself |
+| analysis/benchmark.py | Preserve left observation order in common-prediction join, fixing nondeterministic floating-point reduction order | Counts unchanged; metrics unchanged within 1e-14; prior reports preserved |
+| reports/runs/step18-1-2026-10-26 | Reaggregate hash-verified stored predictions with current code and explicit lineage | No model fitting/inference rerun for this artifact |
+| tests/test_application.py | Expect verified baseline projection and correct model identity | Existing scientific assertions retained |
+| tests/test_benchmark.py | Repeated aggregation determinism regression | No model performance winner assumed |
+| tests/test_restored_features.py | Real field identities, native selection payload, color layers, manifest inputs, source counts and hash rejection | Synthetic data confined to explicitly labeled tests |
+| tests/browser_step18.py | Real TabPFN inference/export, UMAP selection, microscopy link, inventories and responsive interactions | Uses separately cached Playwright/Chromium |
+| METHODS.md, DATA_PROVENANCE.md, CONFIGURATION.md, model_inventory.json, REMAINING_BLOCKERS.md | Record recovered provenance, actual computation, license and unresolved evidence | Prior claims narrowed to executed scope |
+
+Step 18.1 documentation also updates README.md, DESIGN.md, reports/LATEST.md, TEST_RESULTS.md and STEP18_1_RECOVERY.md. These point to current methods, responsive map behavior, preserved report lineage, actual verification and remaining blockers. artifacts/step18_1 contains execution logs, screenshots, source authentication, license, preservation audit and the partial recovery manifest. No atlas.css change remains.

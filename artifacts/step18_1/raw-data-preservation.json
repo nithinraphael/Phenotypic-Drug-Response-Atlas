@@ -1,0 +1,18 @@
+{
+  "data/bbbc021/compounds.csv": true,
+  "data/bbbc021/embeddings_cache.npz": true,
+  "data/bbbc021/mechanisms.csv": true,
+  "data/bbbc021/metadata.csv": true,
+  "data/bbbc021/plate.zip": true,
+  "data/bbbc021/umap_cache.npz": true,
+  "data/ctrp/ctrp_matched_responses.csv": true,
+  "data/ctrp/sample_info.tsv": true,
+  "data/gdsc/GDSC2_fitted_dose_response.csv": true,
+  "data/prism/cell_lines.csv": true,
+  "data/prism/curves.csv": true,
+  "data/prism/pooling.csv": true,
+  "data/prism/ranked_catalog_cache.parquet": true,
+  "data/prism/responses.csv": true,
+  "data/prism/summary_cache.parquet": true,
+  "data/prism/treatments.csv": true
+}

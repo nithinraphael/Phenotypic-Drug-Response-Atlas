@@ -1,0 +1,17 @@
+{
+  "model_id": "DINO ViT-S/8 ImageNet baseline",
+  "checkpoint_path": "/home/ronaldo/.cache/torch/hub/checkpoints/dino_deitsmall8_pretrain.pth",
+  "source_directory": "data/bbbc021/verified_model",
+  "verified_files": {
+    "/home/ronaldo/.cache/torch/hub/checkpoints/dino_deitsmall8_pretrain.pth": "55c8b267f479b614ec20858947ce361ba804846c193e20be74263a096bb6d75e",
+    "data/bbbc021/verified_model/hubconf.py": "fa80babf82c71d2123e23b05061eb1991a1fbc9877238f250b2a25023e910f72",
+    "data/bbbc021/verified_model/vision_transformer.py": "b1f998d5f49ab43666b9fc6d007c5f6540c3ead2e8645e144f74045f63ff44d7",
+    "data/bbbc021/verified_model/utils.py": "962a97e1acda1c986dfd921275325e4083f9016dddadcf018f1ccf03fa600eab",
+    "data/bbbc021/verified_model/LICENSE": "50e6751797c50dedd75ef1b8a0d9e42f5f8472e9fbce91f34718e9f97b0c780a"
+  },
+  "weights_source": "https://dl.fbaipublicfiles.com/dino/dino_deitsmall8_pretrain/dino_deitsmall8_pretrain.pth",
+  "architecture_source": "https://github.com/facebookresearch/dino",
+  "source_checked_at": "2026-10-26",
+  "license": "Apache-2.0",
+  "domain_limitation": "Exploratory ImageNet transfer to fluorescence RGB composites; not Cell-DINO."
+}

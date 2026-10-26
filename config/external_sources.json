@@ -1,0 +1,22 @@
+[
+  {
+    "dataset": "GDSC2",
+    "path": "data/gdsc/verified_source/GDSC2_fitted_dose_response_25Feb20.csv",
+    "sha256": "1a4906f18be89a1f06e50c68ccae75db91fcdfffe7c97e21c72f88b5dda7d5b5",
+    "compound_key": "DRUG_ID",
+    "cell_key": "SANGER_MODEL_ID",
+    "release": "8.2 / 25Feb20",
+    "provenance": "Official release authenticated; local table numerically equivalent",
+    "source_url": "https://ftp.sanger.ac.uk/pub/project/cancerrxgene/releases/release-8.2/GDSC2_fitted_dose_response_25Feb20.csv"
+  },
+  {
+    "dataset": "CTRPv2",
+    "path": "data/ctrp/ctrp_matched_responses.csv",
+    "sha256": "caaa4af92d2ec61c9280b3ec77dfa36da62deddc08b5f630079910338ba56227",
+    "compound_key": "improve_chem_id",
+    "cell_key": "improve_sample_id",
+    "release": "Unverified (local label CTRPv2_2015)",
+    "provenance": "Local processed records only; acquisition and potency scale unverified",
+    "source_url": null
+  }
+]

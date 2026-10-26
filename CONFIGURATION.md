@@ -1,6 +1,6 @@
 # Optional analysis configuration
 
-No example numbers are installed as experimental results. TabPFN is configured explicitly as v2 CPU using verified cached weights; external-comparison and projection configurations remain absent. Reopen the application after changing source files or configuration; it does not watch external data mutations.
+No example numbers are installed as experimental results. TabPFN is configured explicitly as v2 CPU using verified cached weights; the verified DINO baseline projection is configured; external cross-dataset comparison remains unconfigured. Reopen the application after changing source files or configuration; it does not watch external data mutations.
 
 ## TabPFN
 
@@ -44,3 +44,9 @@ Mappings are identifier-based, whitespace-normalized and case-sensitive. Ambigui
 Per-source counts accompany matches. Correlations are calculated separately by source pair, metric and definition, using Spearman ranks; fewer than three nonconstant pairs produce Not evaluated. No correlation p-values, intervals, causal explanations or subjective concordance categories are produced.
 
 Configured TabPFN weights match publisher SHA-256 `2ab5a07d5c41dfe6db9aa7ae106fc6de898326c2765be66505a07e2868c10736`, repository revision `230d61748baee2db4beb5cf5b99c7cd3a9b71df0`: https://huggingface.co/Prior-Labs/TabPFN-v2-reg/blob/230d61748baee2db4beb5cf5b99c7cd3a9b71df0/tabpfn-v2-regressor.ckpt. Their absolute local cache path is machine-specific; a different machine must supply an explicitly verified checkpoint path. No v3.5 fallback is implemented.
+
+## Step 18.1 verified DINO baseline
+
+config/dino_baseline.json pins the existing DINO ViT-S/8 checkpoint and official architecture/helper hashes. image_projection.py computes image-field embeddings with CPU float32, batch size 2 by default; --device cuda is explicit and rejects unavailable CUDA. It never downloads models, trains weights or overwrites an existing projection. The generated projection_config.json/NPZ/JSON are consumed by the public map. This configuration is a DINO ImageNet baseline, not a Cell-DINO fallback. See METHODS.md for transforms and domain limitations.
+
+config/external_sources.json records authenticated GDSC release bytes and the unverified CTRP local subset. It supplies source availability/counts only; config/validation.json and reviewed mappings are still required for comparisons.

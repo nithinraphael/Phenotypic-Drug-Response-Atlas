@@ -1,0 +1,5 @@
+{'id': 'Week1_22123/Week1_150607_C10_s1_w171173D63-FDAC-457A-9E33-9A97B4B33AB3.tif', 'x': 294.87, 'y': 331.59, 'dose': 0.003, 'box': {'x': 112, 'y': 269.96875, 'width': 1216, 'height': 510, 'top': 269.96875, 'right': 1328, 'bottom': 779.96875, 'left': 112}}
+events [{'event': 'plotly_selected', 'points': [{'customdata': ['Week1_22123/Week1_150607_C10_s1_w171173D63-FDAC-457A-9E33-9A97B4B33AB3.tif', 'aphidicolin', 0.003], 'curveNumber': 2, 'pointIndex': 0}]}, {'event': 'plotly_click', 'points': [{'customdata': ['Week1_22123/Week1_150607_C10_s1_w171173D63-FDAC-457A-9E33-9A97B4B33AB3.tif', 'aphidicolin', 0.003], 'curveNumber': 2, 'pointIndex': 0}]}]
+frames []
+selectors [{'value': 'taxol', 'text': 'taxol'}, {'value': '0.1', 'text': '0.1'}, {'value': 'Well D06 · field 97 · replicate 1', 'text': 'Well D06 · field 97 · replicate 1'}, {'value': 'Compound', 'text': 'Compound'}]
+headings ['Phenotypic Drug-Response Atlas', 'Cell Explorer', 'Vehicle control (DMSO)', 'taxol at 0.1 μM', 'Image-field morphology map', 'Channels and map interpretation']

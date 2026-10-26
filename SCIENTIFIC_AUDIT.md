@@ -78,3 +78,13 @@ Unsupported FDR labels, significance tiers, fixed correlations, 5,572 matched-pa
 - Image representations: recover exact checkpoint/preprocessing and compatible channels, or explicitly recompute using a verified model. Do not relabel old caches by guesswork.
 - Perturbation stability and valid bootstrap intervals remain unevaluated.
 - Browser interaction and pretrained execution require further tests in an environment with browser/model assets. Programmatic UI tests are not browser E2E tests.
+
+## Step 18.1 follow-up
+
+GDSC release 8.2 source identity was recovered through the official archive and compared across all 135,242 local records. CTRP processing provenance and reviewed compound/cell-line crosswalks were not recovered; historical hand-entered validation remains quarantined. Correlations, confidence intervals and replication classes remain unsupported.
+
+Official DINO ViT-S/8 weights and source code were authenticated. Fresh image-field embeddings and UMAP were computed for all 240 available fields, with full transforms and stable identifiers. This ImageNet baseline is explicitly distinct from Cell-DINO and individual-cell analysis. No approved Cell-DINO weights or three-channel compatibility evidence were available.
+
+Real TabPFN v2 inference, source-labeled exports, license attribution, conditioning semantics and reactive separation are exposed publicly. A native marimo selection payload omitted custom data; server-side trace/point resolution repairs microscopy linking.
+
+Scientific regression tests exposed unstable ordering in the existing common-prediction join. Left-order preservation fixes repeated floating-point reductions. Stored predictions were reaggregated with preserved original lineage; no prior report was overwritten.

@@ -69,3 +69,10 @@ class BenchmarkTests(unittest.TestCase):
     def test_multiple_screens_rejected(self):
         data=observations().with_columns(pl.when(pl.col('column_name')=='0').then(pl.lit('other')).otherwise(pl.col('screen_id')).alias('screen_id'))
         self.assertTrue(evaluate_curve(data,'curve').is_error())
+
+    def test_repeated_aggregation_preserves_reduction_order(self):
+        predictions=evaluate_curve(observations(),'curve',models=('Mean baseline',)).ok
+        expected=aggregate_predictions(predictions)
+        self.assertEqual(expected['rmse'][0],expected['common_rmse'][0])
+        for _ in range(20):
+            self.assertTrue(aggregate_predictions(predictions).equals(expected))

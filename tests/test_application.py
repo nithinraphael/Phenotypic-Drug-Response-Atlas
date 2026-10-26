@@ -24,7 +24,10 @@ class ApplicationTests(unittest.TestCase):
         self.assertEqual(d['image_metadata'].ok.height,240)
         self.assertEqual(d['measurement_result'].ok.height,d['measurements'].height+d['measurement_exclusions'].height)
         self.assertTrue(d['external_result'].is_error())
-        self.assertTrue(d['projection'].is_error())
+        self.assertTrue(d['projection'].is_ok())
+        self.assertEqual(d['projection'].ok.height,240)
+        self.assertEqual(d['projection'].ok['model_id'].unique().to_list(),['DINO ViT-S/8 ImageNet baseline'])
+        self.assertIsNotNone(d['map_plot'])
         self.assertTrue(d['tab_prediction'].is_error())
 
     def test_compound_change_rebuilds_dependent_selection(self):

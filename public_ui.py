@@ -72,7 +72,49 @@ def candidate_figure(catalog):
     return figure(fig)
 
 
-def audited_benchmark(root='reports/runs/final-2026-10-26'):
+def morphology_figure(data, compound, dose, color_by='Concentration'):
+    from components import build_umap_plot
+    fig = build_umap_plot(data, compound, dose)
+    if color_by == 'Compound':
+        fig.data = fig.data[2:]
+        for group in data.partition_by('Image_Metadata_Compound', maintain_order=True):
+            fig.add_scatter(x=group['umap_1'],y=group['umap_2'],mode='markers',name=group['Image_Metadata_Compound'][0])
+    else:
+        fig.data[1].marker.update(showscale=True,colorbar=dict(title='μM',thickness=12))
+    for trace in fig.data:
+        if trace.name == 'Dose-ordered condition centroids':
+            continue
+        if trace.name == 'Other conditions':
+            group = data.filter(pl.col('Image_Metadata_Compound') != compound)
+        elif trace.name.startswith('All fields at'):
+            group = data.filter(pl.col('Image_Metadata_Compound') == compound)
+            nearest = min(group['Image_Metadata_Concentration'].unique(),key=lambda value:abs(value-dose))
+            group = group.filter(pl.col('Image_Metadata_Concentration') == nearest)
+        else:
+            group = data.filter(pl.col('Image_Metadata_Compound') == trace.name)
+        trace.update(customdata=group.select('image_field_id','Image_Metadata_Compound','Image_Metadata_Concentration').rows(),
+                     hovertemplate='%{customdata[1]} · %{customdata[2]:g} μM<br>%{customdata[0]}<extra></extra>')
+    fig.update_layout(clickmode='event+select')
+    fig = figure(fig)
+    title = fig.layout.title.text
+    if ' ImageNet baseline · ' in title:
+        title = title.replace(' ImageNet baseline · ','<br><sup>ImageNet baseline · ')+'</sup>'
+    fig.update_layout(title=dict(text=title,font=dict(size=18)),height=600,margin=dict(t=95,b=145))
+    return fig
+
+
+def selected_image_field(points, plot):
+    if not points:
+        return None
+    curve = points[-1].get('curveNumber')
+    index = points[-1].get('pointIndex',points[-1].get('pointNumber'))
+    if not isinstance(curve,int) or not isinstance(index,int) or not 0 <= curve < len(plot.data):
+        return None
+    fields = plot.data[curve].customdata
+    return fields[index][0] if fields is not None and 0 <= index < len(fields) else None
+
+
+def audited_benchmark(root='reports/runs/step18-1-2026-10-26'):
     root = Path(root)
     required = ['manifest.json','outputs.json','model_benchmark.csv','held_out_predictions.csv']
     if any(not (root/name).is_file() for name in required):

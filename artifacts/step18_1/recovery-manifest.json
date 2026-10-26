@@ -1,0 +1,92 @@
+{
+  "schema_version": 1,
+  "analysis": "Step 18.1 feature recovery",
+  "status": "partial",
+  "inputs": {
+    "notebook.py": "7164955a0b9edb4323efc83bd0a9ff7281d585d28a5616f302f8eacd48734216",
+    "public_ui.py": "7236c139768bc53a20a5fa1a4afa40fd0fb1eb4fbe5cb70f1a9fc840c287a5de",
+    "image_projection.py": "4ad700af49a2a61ac6f374863075e72ab5b2468f47e60b90f2000a374afd873a",
+    "external_evidence.py": "ca178233522ed4cb9ac22b34c40a68ea5addf36de48b43b74da1e912115636b5",
+    "config/dino_baseline.json": "ea445752bd52e3107e61014dcea7a45920ab5a36e8829f6243b2f6a5084ee4f1",
+    "config/external_sources.json": "9428094be0774b8e0046aa669c28013ea0afb437cb93220c2408a0d017728a0a",
+    "config/tabpfn.json": "666395ff5524a5ac6b0eaeee868fe21514f740adcd31cd02a98a87b6e8d7a3a4",
+    "data/bbbc021/dino_baseline_projection.npz": "04e889ff916c152167c718745cdb20e590b359b3a7269e0b89485622cdefa74a",
+    "data/bbbc021/dino_baseline_projection.json": "d687ed807345828ce61977c4efb8dc52022146b2354778318fdcdc9b735d1619",
+    "artifacts/step18_1/gdsc-source-verification.json": "2cd0aabe9ae7656874e7239622a99c2fcab616d8340a9cd72bb79d016177a927",
+    "artifacts/step18_1/tabpfn-browser-predictions.csv": "f23e5ade4656a6c7e559996bb0e370ea4124c8bc091cf346fbe8ea10c2508208"
+  },
+  "config": {
+    "projection": "DINO ViT-S/8 ImageNet baseline",
+    "external_comparison": "Unavailable",
+    "cell_dino": "Unavailable"
+  },
+  "software_versions": {
+    "python": "3.13.15",
+    "marimo": "0.25.2",
+    "polars": "2.0.0",
+    "numpy": "2.5.4",
+    "scipy": "1.18.1",
+    "thunor": "1.0.3",
+    "tabpfn": "9.2.0",
+    "torch": "2.14.1",
+    "torchvision": "0.29.1",
+    "umap-learn": "0.5.12",
+    "plotly": "7.1.0",
+    "expression": "5.7.0",
+    "tifffile": "2026.10.15",
+    "scikit-learn": "1.9.1",
+    "piecewise-regression": "1.5.0",
+    "pillow": "13.0.0",
+    "kaleido": "1.5.0",
+    "pyreadr": "0.5.8"
+  },
+  "created_at": "2026-10-26T18:51:52.009071+00:00",
+  "code_revision": "bfdae5613746725b37fd3547be5b096fe05812fe",
+  "working_tree_dirty": true,
+  "analysis_code_hashes": {
+    "analysis/__init__.py": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "analysis/benchmark.py": "92d10f1d9d246315c6a4e4b41ec3a103efdb7d4f988c7f2404436467807249f3",
+    "analysis/catalog.py": "b60a6a1dddcfdb0012509ad1b263f8e9137bc12852dab31b021f3c97db6c377a",
+    "analysis/embeddings.py": "ab5f799a3ffa9aa7ff48d13c39c55ce7aa99def3535e6fc0b4cf5b039c5f5a7e",
+    "analysis/fitting.py": "6ee49f7e8a4d4f4b99de30ec80695fab9551789e8dd63ebbceece72c514404a7",
+    "analysis/microscopy.py": "7b3044c6bd0eed7429ef8b1dc8734df5628e515ed530e3e25729b088705f9f36",
+    "analysis/model_worker.py": "c4a96e28085bf3410e73c16345791cb6265af5cdbd7b9c4d40a7cacdde992d63",
+    "analysis/models.py": "8eb8c156f6b5b55c2b9aaac2bd18e88f465856761a8bd6ae7c521f595debf647",
+    "analysis/prism.py": "52f68996a45855ab16eb4f7a7aabeafc13d0c9f6c21c407997a9f7058f12557a",
+    "analysis/provenance.py": "25539ba32065ade06eb5cbf21e242feb2d3e1306a6cc93cfa956f4e033abe133",
+    "analysis/reporting.py": "e542be19d1f2cc3325957b433e723dc1aa8bafff310855fb5da0b9201e187747",
+    "analysis/run.py": "13639f3ce8a8bdb46a5e5c647ccf46f1b5ef74c85190191d2c6a2cc6e30d8c57",
+    "analysis/validation.py": "e4a173bf74fd1505cd435d4b88c9e22c961874ce749acaf27e95d0b79827e9e8"
+  },
+  "tabpfn_predictions": 120,
+  "projection_fields": 240,
+  "source_inventory": [
+    {
+      "Dataset": "GDSC2",
+      "Records": 135242,
+      "Compounds": 198,
+      "Cells": 809,
+      "Release": "8.2 / 25Feb20",
+      "Provenance": "Official release authenticated; local table numerically equivalent",
+      "Comparison": "Not evaluated: identifier crosswalks and metric compatibility unresolved",
+      "Source": "https://ftp.sanger.ac.uk/pub/project/cancerrxgene/releases/release-8.2/GDSC2_fitted_dose_response_25Feb20.csv",
+      "SHA256": "1a4906f18be89a1f06e50c68ccae75db91fcdfffe7c97e21c72f88b5dda7d5b5"
+    },
+    {
+      "Dataset": "CTRPv2",
+      "Records": 16729,
+      "Compounds": 9,
+      "Cells": 1153,
+      "Release": "Unverified (local label CTRPv2_2015)",
+      "Provenance": "Local processed records only; acquisition and potency scale unverified",
+      "Comparison": "Not evaluated: identifier crosswalks and metric compatibility unresolved",
+      "Source": null,
+      "SHA256": "caaa4af92d2ec61c9280b3ec77dfa36da62deddc08b5f630079910338ba56227"
+    }
+  ],
+  "blockers": [
+    "Approved Cell-DINO weights and channel compatibility",
+    "Reviewed chemical/cell-line crosswalks",
+    "CTRP processing provenance and metric compatibility"
+  ]
+}

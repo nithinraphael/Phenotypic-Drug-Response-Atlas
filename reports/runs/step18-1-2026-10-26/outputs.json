@@ -1,0 +1,10 @@
+{
+  "manifest.json": "3fb790fd886afe60d6791e30e0ab79a2e6dd7327cc55ce93d74d3b6072573e4a",
+  "model_benchmark.csv": "25136646f3176b7133bb74393a55b9b4f3bfd8d05817e7436e2a4bbc4150bb3b",
+  "catalog_exclusions.csv": "0003fe9a04c3d45edd7f0f6df08879401c696fae6dc12696be7c61d8dd630f58",
+  "held_out_predictions.csv": "f873b351aaaf8f9fb892741585acae8c9bba861692a3adb66a89fcae25f19ae0",
+  "shortlist.csv": "038f84d0537a547b7a952a71a138b773637d9c40e9fae55af6c9c2fede36e2ea",
+  "eligible_catalog.csv": "81dcf6231f043fdaf4e97fa6a8438b6f111195193f3cbef883c605a26ec9aa42",
+  "source_snapshot.tar.gz": "34fc878109aecb1dc58438e7c212d31c1280ee4a04b3e10602e1b6eb10f888c9",
+  "REPORT.md": "65f7e194d9a0207baf9ce54acdcd39fc609e34bd2e8695074c0938fa49be46cc"
+}
