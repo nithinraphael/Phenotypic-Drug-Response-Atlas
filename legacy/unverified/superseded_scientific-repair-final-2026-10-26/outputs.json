@@ -1,0 +1,16 @@
+{
+  "manifest.json": "a1b0d2ca887f793ce04a81675b6eb93551bc11012c98422b8ac34319dc69dfe2",
+  "model_benchmark.csv": "a6be37e8b5d6a5618b138f44ba75c34654a8fba5eaf654fe51082c5db8f5b794",
+  "observation_exclusions.csv": "cdb2429a59feb7c5381fbfbfe5b1634af627c6aee547c6e8a86a70c0a874dcda",
+  "catalog_exclusions.csv": "0003fe9a04c3d45edd7f0f6df08879401c696fae6dc12696be7c61d8dd630f58",
+  "held_out_predictions.csv": "290ceb93591a192fb870e43661ee56e6d4e1c651b99013fa5a89ce71935b612d",
+  "shortlist.csv": "d03dc51cd7cb544184b2dea3656552fac50aaecafef902c6d785970373075f2e",
+  "eligible_catalog.csv": "b24cbd2e51102a47b2e1a8967b8165496ed2a08e2c0eec4e0f14c8e491340224",
+  "held_out_benchmark.html": "372d4054628d25ad71288b798a7dad9606699cbb327fcafc4cfae7a5efa6c0ea",
+  "source_snapshot.tar.gz": "767d3b1a2890170ae3fd00d43376562f3d73c4c6468df49ec9fca95fbe762929",
+  "excluded_curve_records.parquet": "27c0fb12f7feb160e6c1eb7e9c09f835d506f624c69e5bba4cdaf0c956406caa",
+  "dose_response.html": "84d1dd60bd3ec68f336fc91b678e8d85fc41097db9e08e335654c86c56b6486a",
+  "selected_observations.csv": "ab3ea4e571b00e0a1f94120dd3ea5d85151582a34a91386b2b1c4421337a6556",
+  "REPORT.md": "2cc8fec6198389c5763e2778921fd0c5d47a680ed92f941738570e483a484953",
+  "selected_fit.json": "198ffa27c8a67607f16b88c13d9d3808f44b8416b95aa0953ec5d22dcc52ad11"
+}

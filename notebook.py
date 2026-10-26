@@ -1,669 +1,312 @@
 import marimo
 
-__generated_with = "0.25.2"
-app = marimo.App(width="medium")
+__generated_with = '0.25.2'
+app = marimo.App(width='medium', app_title='Phenotypic Drug-Response Atlas')
 
 
 @app.cell
 def _():
-    import os
+    from pathlib import Path
     import marimo as mo
     import numpy as np
     import polars as pl
-    from scipy import stats
-    from expression import Result, Ok, Error
-    from components import (
-        fit_hill,
-        predict_tabpfn,
-        build_drc_plot,
-        load_microscopy_rgb,
-        build_umap_plot,
-        build_validation_plot,
-        build_generalization_plot,
-    )
-
-    return (
-        Error,
-        Ok,
-        Result,
-        build_drc_plot,
-        build_generalization_plot,
-        build_umap_plot,
-        build_validation_plot,
-        fit_hill,
-        load_microscopy_rgb,
-        mo,
-        np,
-        os,
-        pl,
-        predict_tabpfn,
-        stats,
-    )
+    from expression import Error, Ok
+    from analysis import benchmark, catalog, embeddings, fitting, microscopy, models, prism, provenance, validation
+    import components
+    return Path, Error, Ok, benchmark, catalog, components, embeddings, fitting, microscopy, mo, models, np, pl, prism, provenance, validation
 
 
 @app.cell
-def _(mo, pl):
-    @mo.cache
-    def load_prism():
-        return {
-            "cell_lines": pl.read_csv("data/prism/cell_lines.csv", null_values="NA"),
-            "treatments": pl.read_csv("data/prism/treatments.csv", null_values="NA"),
-            "curves": pl.scan_csv("data/prism/curves.csv", null_values="NA"),
-            "responses": pl.scan_csv("data/prism/responses.csv", null_values="NA"),
-        }
+def _(Path, mo, prism, provenance, catalog, pl):
+    source_identity = tuple((str(p), provenance.sha256(p)) for p in sorted(Path('data/prism').glob('*.csv')))
 
-    prism = load_prism()
-    return (prism,)
+    @mo.cache
+    def load_analysis(identity):
+        loaded = prism.load_prism()
+        if loaded.is_error():
+            return loaded, None, None, None
+        tables = loaded.ok
+        counts = prism.dataset_counts(tables)
+        columns = ['broad_id', 'depmap_id', 'screen_id', 'name', 'ec50', 'slope', 'r2', 'lower_limit', 'upper_limit', 'ccle_name']
+        ranked = catalog.build_catalog(tables['curves'].select(columns), tables['cell_lines'].collect())
+        return loaded, counts, ranked, tables['cell_lines'].collect()
+
+    prism_result, counts, ranked_result, cell_metadata = load_analysis(source_identity)
+    return cell_metadata, counts, prism_result, ranked_result, source_identity
 
 
 @app.cell
-def _(mo, np, pl):
-    @mo.cache
-    def load_bbbc021():
-        meta = pl.read_csv("data/bbbc021/metadata.csv").filter(
-            pl.col("Image_Metadata_Plate_DAPI") == "Week1_22123"
-        )
-        u_data = np.load("data/bbbc021/umap_cache.npz")
-        u = u_data["u"]
-
-        moa_map = {
-            "taxol": "Microtubule stabilizer",
-            "nocodazole": "Microtubule destabilizer",
-            "cytochalasin B": "Actin disruptor",
-            "AZ-A": "Aurora kinase inhibitor",
-            "AZ-H": "Aurora kinase inhibitor",
-            "aphidicolin": "DNA replication inhibitor",
-            "DMSO": "Vehicle Control",
-        }
-        moas = [moa_map.get(r["Image_Metadata_Compound"], "Other") for r in meta.iter_rows(named=True)]
-
-        df_umap = meta.with_columns([
-            pl.Series("umap_1", u[:, 0]),
-            pl.Series("umap_2", u[:, 1]),
-            pl.Series("moa", moas),
+def _(catalog, counts, mo, pl, prism_result, ranked_result):
+    if prism_result.is_error():
+        overview_view = mo.md(prism_result.error)
+    elif ranked_result.is_error():
+        overview_view = mo.md(ranked_result.error)
+    else:
+        eligible_catalog, catalog_exclusions, excluded_curve_records = ranked_result.ok
+        shortlist = eligible_catalog.head(100)
+        overview_view = mo.vstack([
+            mo.md('### Candidate screening'),
+            mo.ui.table(pl.DataFrame([counts]), selection=None),
+            mo.md(f'Showing {shortlist.height} highest-ranked curves from {eligible_catalog.height:,} eligible source-fit records.'),
+            mo.md('Screening Score = absolute fitted Hill slope × R². Extreme slopes can be unstable. Source-fit convergence and transition coverage have not been reverified.'),
+            mo.md(catalog.CATEGORY_NOTE),
+            mo.ui.table(shortlist.select(
+                pl.col('name').alias('Compound'), pl.col('ccle_name').alias('Cell line'), pl.col('primary_tissue').alias('Tissue'),
+                pl.col('ec50').alias('EC50 (μM)'), pl.col('slope').alias('Hill slope'), pl.col('r2').alias('R²'),
+                'Screening Score', 'Response Category', 'Fit diagnostics', 'broad_id', 'depmap_id', 'screen_id'), selection=None),
+            mo.hstack([
+                mo.download(eligible_catalog.write_csv().encode(), filename='eligible_catalog.csv', label='Export full eligible catalog'),
+                mo.download(shortlist.write_csv().encode(), filename='shortlist.csv', label='Export displayed shortlist'),
+            ]),
+            mo.accordion({'Sequential filter exclusions': mo.ui.table(catalog_exclusions, selection=None)}),
         ])
-        return {
-            "meta": meta,
-            "df_umap": df_umap,
-            "compounds": ["taxol", "cytochalasin B", "nocodazole", "aphidicolin", "AZ-A", "AZ-H"],
-        }
-
-    bbbc021 = load_bbbc021()
-    return (bbbc021,)
-
-
-@app.cell
-def _(Error, Ok, Result, mo, pl, prism):
-    resp_col_set = set(prism["responses"].collect_schema().names()[1:])
-
-    @mo.cache
-    def fetch_prism_measurements(drug: str, cell_line_id: str) -> Result[tuple[pl.DataFrame, pl.DataFrame], str]:
-        if not drug or not cell_line_id:
-            return Error("Please select both a compound and a cell line.")
-
-        drug_tr = prism["treatments"].filter(
-            (pl.col("name") == drug) & (pl.col("perturbation_type") == "experimental_treatment")
-        )
-        if drug_tr.height == 0:
-            return Error(f"No experimental treatments found for '{drug}'.")
-
-        matched_cols = [c for c in drug_tr["column_name"].to_list() if c in resp_col_set]
-        if not matched_cols:
-            return Error(f"No response matrix columns found for '{drug}'.")
-
-        row = (
-            prism["responses"]
-            .select([""] + matched_cols)
-            .filter(pl.col("") == cell_line_id)
-            .collect()
-        )
-        if row.height == 0:
-            return Error(f"Cell line '{cell_line_id}' not found in response matrix.")
-
-        melted = row.unpivot(index="", on=matched_cols, variable_name="column_name", value_name="response")
-        melted = melted.with_columns(pl.col("response").cast(pl.Float64, strict=False))
-
-        joined = (
-            drug_tr.join(melted, on="column_name")
-            .filter(pl.col("response").is_not_null())
-            .with_columns(pl.lit(2.0).pow(pl.col("response")).alias("viability"))
-            .sort("dose")
-        )
-
-        curves_df = prism["curves"].filter(
-            (pl.col("name") == drug) & (pl.col("depmap_id") == cell_line_id)
-        ).collect()
-
-        if joined.height == 0 and curves_df.height == 0:
-            return Error(f"No measurements or fitted curves found for '{drug}' in '{cell_line_id}'.")
-
-        return Ok((joined, curves_df))
-
-    return fetch_prism_measurements, resp_col_set
-
-
-@app.cell
-def _(mo, np, pl, prism, stats):
-    @mo.cache
-    def build_catalog():
-        top_c = (
-            prism["curves"]
-            .filter(
-                (pl.col("r2") >= 0.75)
-                & (pl.col("ec50").is_not_null())
-                & (pl.col("ec50") > 0.0)
-                & (pl.col("slope").abs() > 1.0)
-                & (pl.col("slope").abs() <= 20.0)
-            )
-            .with_columns([
-                pl.col("slope").abs().alias("abs_slope"),
-                (pl.col("slope").abs() * pl.col("r2")).alias("score")
-            ])
-            .sort("score", descending=True)
-            .limit(100)
-            .join(prism["cell_lines"].lazy().select(["depmap_id", "ccle_name", "primary_tissue"]), on="depmap_id", how="left")
-            .collect()
-        )
-
-        slopes = top_c["abs_slope"].to_numpy()
-        r2s = top_c["r2"].to_numpy()
-        se_slopes = np.maximum((1.0 - r2s) / np.sqrt(8.0), 0.05)
-        z_scores = (slopes - 1.0) / se_slopes
-        p_values = 1.0 - stats.norm.cdf(z_scores)
-        q_values = stats.false_discovery_control(p_values, method="bh")
-
-        cat_df = top_c.with_columns([
-            pl.Series("p_value", np.round(p_values, 4)),
-            pl.Series("fdr_q", np.round(q_values, 4)),
-            pl.when((pl.col("abs_slope") >= 2.0) & (pl.col("r2") >= 0.90))
-            .then(pl.lit("Tier 1 (|nH| ≥ 2.0, R² ≥ 0.90)"))
-            .otherwise(pl.lit("Tier 2 (R² ≥ 0.80)"))
-            .alias("tier")
-        ]).select([
-            pl.col("name").alias("Compound"),
-            pl.col("ccle_name").alias("Cell Line"),
-            pl.col("depmap_id").alias("DepMap ID"),
-            pl.col("primary_tissue").alias("Primary Tissue"),
-            pl.col("ec50").round(4).alias("EC50 (μM)"),
-            pl.col("abs_slope").round(2).alias("Hill Slope"),
-            pl.col("r2").round(3).alias("R² Fit"),
-            pl.col("fdr_q").alias("FDR q-value"),
-            pl.col("tier").alias("Evidence Tier"),
-        ])
-        return cat_df
-
-    catalog_df = build_catalog()
-    catalog_csv = catalog_df.write_csv()
-    return build_catalog, catalog_csv, catalog_df
-
-
-@app.cell
-def _(catalog_csv, mo):
-    overview_tier_filter = mo.ui.dropdown(
-        options=[
-            "All Tiers",
-            "Tier 1 (|nH| ≥ 2.0, R² ≥ 0.90)",
-            "Tier 2 (R² ≥ 0.80)",
-        ],
-        value="All Tiers",
-        label="Evidence Classification",
-    )
-
-    overview_download_btn = mo.download(
-        data=catalog_csv,
-        filename="candidate_transitions_catalog.csv",
-        mimetype="text/csv",
-        label="Export Catalog (CSV)",
-    )
-    return overview_download_btn, overview_tier_filter
-
-
-@app.cell
-def _(catalog_df, mo, overview_download_btn, overview_tier_filter):
-    overview_kpis = mo.hstack(
-        [
-            mo.stat(value="701,004 Curves", label="PRISM Screen Scale", caption="481 cell lines × 1,448 compounds (120h)"),
-            mo.stat(value="240 Fields", label="BBBC021 Microscopy", caption="MCF-7 carcinoma (24h, 3 optical channels)"),
-            mo.stat(value="5,572 Pairs", label="Cross-Consortium Overlap", caption="Tri-matched conditions with GDSC2 & CTRPv2"),
-            mo.stat(value="RMSE 0.095 vs 0.185", label="Dose Generalization", caption="Parametric Hill (0.095) vs Breakpoint (0.185)"),
-        ],
-        justify="space-between",
-        gap=2,
-    )
-
-    filtered_catalog = (
-        catalog_df.filter(catalog_df["Evidence Tier"] == overview_tier_filter.value)
-        if overview_tier_filter.value != "All Tiers"
-        else catalog_df
-    )
-
-    overview_view = mo.vstack(
-        [
-            mo.md("### Overview: Phenotypic Drug-Response Screen"),
-            mo.md(
-                "Systematic profiling across high-throughput cell viability and morphological phenotype modalities. "
-                "Candidate steep responses in PRISM are scored by sensitivity ($|n_H| \\times R^2$) with Benjamini–Hochberg FDR control ($q < 0.05$)."
-            ),
-            overview_kpis,
-            mo.hstack([overview_tier_filter, overview_download_btn], justify="start", gap=2),
-            mo.ui.table(filtered_catalog, selection=None),
-            mo.md(
-                "> **Scientific Scope:** Transition metrics characterize continuous mathematical sensitivity in static 120-hour viability assays. "
-                "Steep inflections indicate rapid population decline but do not constitute proof of irreversible biological tipping points or dynamical bistability without wash-out assays."
-            ),
-        ],
-        gap=1.5,
-    )
     return (overview_view,)
 
 
 @app.cell
-def _(mo, prism):
-    all_drugs = sorted(prism["treatments"]["name"].drop_nulls().unique().to_list())
-    def_drug = "bortezomib" if "bortezomib" in all_drugs else all_drugs[0]
-
-    drc_drug_select = mo.ui.dropdown(
-        options=all_drugs,
-        value=def_drug,
-        searchable=True,
-        label="Compound",
-    )
-    return all_drugs, def_drug, drc_drug_select
+def _(mo, pl, prism_result):
+    compound_rows = (prism_result.ok['curves'].select('broad_id', 'name').unique().collect().sort(['name', 'broad_id'])
+                     if prism_result.is_ok() else pl.DataFrame(schema={'broad_id':pl.String,'name':pl.String}))
+    compound_options = {f"{r['name']} · {r['broad_id']}": r['broad_id'] for r in compound_rows.iter_rows(named=True)}
+    default_compound = next((label for label in compound_options if label.startswith('bortezomib ·')), next(iter(compound_options), None))
+    compound_select = mo.ui.dropdown(compound_options, value=default_compound, searchable=True, label='Compound')
+    return compound_select, compound_rows
 
 
 @app.cell
-def _(drc_drug_select, mo, pl, prism):
-    tested_cls = (
-        prism["curves"]
-        .filter(pl.col("name") == drc_drug_select.value)
-        .select("depmap_id")
-        .unique()
-        .drop_nulls()
-        .collect()["depmap_id"]
-        .to_list()
-    )
-
-    cl_df = (
-        prism["cell_lines"]
-        .filter(pl.col("depmap_id").is_in(tested_cls))
-        .sort("ccle_name")
-    )
-    cl_options = {
-        f"{r['ccle_name']} ({r['depmap_id']})": r["depmap_id"]
-        for r in cl_df.iter_rows(named=True)
-    }
-
-    def_cl_key = next(
-        (k for k in cl_options.keys() if "RKO" in k or "ACH-000943" in k),
-        list(cl_options.keys())[0] if cl_options else "",
-    )
-
-    drc_cell_select = mo.ui.dropdown(
-        options=cl_options,
-        value=def_cl_key,
-        searchable=True,
-        label="Cell Line",
-    )
-    return cl_df, cl_options, def_cl, drc_cell_select, tested_cls
+def _(cell_metadata, compound_select, mo, pl, prism_result):
+    tested = (prism_result.ok['curves'].filter(pl.col('broad_id') == compound_select.value).select('depmap_id').drop_nulls().unique().collect()
+              if prism_result.is_ok() else pl.DataFrame(schema={'depmap_id':pl.String}))
+    names = dict(cell_metadata.select('depmap_id','ccle_name').iter_rows()) if cell_metadata is not None else {}
+    cell_options = {f'{names.get(key) or key} · {key}': key for key in sorted(tested['depmap_id'].drop_nulls())}
+    default_cell = next((label for label in cell_options if 'RKO' in label), next(iter(cell_options), None))
+    cell_select = mo.ui.dropdown(cell_options, value=default_cell, searchable=True, label='Cell line')
+    return (cell_select,)
 
 
 @app.cell
-def _(drc_cell_select, drc_drug_select, fetch_prism_measurements, mo):
-    meas_res = fetch_prism_measurements(drc_drug_select.value, drc_cell_select.value)
+def _(cell_select, compound_select, mo, pl, prism_result):
+    screens = (prism_result.ok['curves'].filter((pl.col('broad_id') == compound_select.value) & (pl.col('depmap_id') == cell_select.value))
+               .select('screen_id').unique().collect()['screen_id'].drop_nulls().sort().to_list() if prism_result.is_ok() else [])
+    screen_select = mo.ui.dropdown(screens, value=screens[0] if screens else None, label='Source screen')
+    return (screen_select,)
 
-    if meas_res.is_ok():
-        _meas_df, _ = meas_res.ok
-        drc_doses = sorted(_meas_df["dose"].drop_nulls().unique().to_list())
-        def_idx = len(drc_doses) // 2 if drc_doses else 0
-        drc_conc_slider = mo.ui.slider(
-            steps=drc_doses,
-            value=drc_doses[def_idx] if drc_doses else 0.1,
-            label="Concentration Cursor (μM)",
-            show_value=True,
-        )
+
+@app.cell
+def _(Error, cell_select, compound_select, mo, prism, prism_result, screen_select, source_identity):
+    @mo.cache
+    def fetch_selected(identity, broad_id, cell_id, screen):
+        return prism.fetch_measurements(prism_result.ok, broad_id, cell_id, screen)
+
+    measurement_result = (fetch_selected(source_identity, compound_select.value, cell_select.value, screen_select.value)
+                          if prism_result.is_ok() and screen_select.value else Error('No available PRISM condition'))
+    if measurement_result.is_ok():
+        measurements, measurement_exclusions = prism.eligible_observations(measurement_result.ok)
     else:
-        drc_doses = [0.01, 0.1, 1.0]
-        drc_conc_slider = mo.ui.slider(steps=drc_doses, value=0.1, label="Concentration Cursor (μM)")
-
-    return drc_conc_slider, meas_res
+        measurements, measurement_exclusions = None, None
+    return measurement_exclusions, measurement_result, measurements
 
 
 @app.cell
-def _(
-    build_drc_plot,
-    drc_cell_select,
-    drc_conc_slider,
-    drc_drug_select,
-    fit_hill,
-    meas_res,
-    mo,
-    np,
-    predict_tabpfn,
-):
-    if meas_res.is_error():
-        drc_fig = None
-        drc_stats = mo.md(f"Unable to load measurements: {meas_res.error}")
-        drc_csv = ""
+def _(fitting, measurements, mo, np):
+    @mo.cache
+    def fit_selected(doses, responses):
+        return fitting.fit_hill(np.asarray(doses), np.asarray(responses))
+
+    hill_fit = fit_selected(tuple(measurements['dose']), tuple(measurements['viability'])) if measurements is not None and measurements.height else fitting.FitResult('failed', 'No valid observations')
+    prediction_grid = np.geomspace(measurements['dose'].min(), measurements['dose'].max(), 120) if measurements is not None and measurements.height else np.array([])
+    return hill_fit, prediction_grid
+
+
+@app.cell
+def _(measurements, mo):
+    cursor_doses = sorted(measurements['dose'].unique().to_list()) if measurements is not None and measurements.height else []
+    concentration_cursor = mo.ui.dropdown(cursor_doses, value=cursor_doses[len(cursor_doses)//2] if cursor_doses else None, label='Concentration cursor (μM)')
+    run_prediction = mo.ui.run_button(label='Run configured TabPFN prediction')
+    run_benchmark = mo.ui.run_button(label='Evaluate held-out concentrations')
+    return concentration_cursor, run_benchmark, run_prediction
+
+
+@app.cell
+def _(Path, models, provenance):
+    model_config = models.tabpfn_config()
+    model_config_identity = provenance.sha256('config/tabpfn.json') if Path('config/tabpfn.json').is_file() else None
+    return model_config, model_config_identity
+
+
+@app.cell
+def _(Error, measurements, mo, model_config, model_config_identity, models, np, prediction_grid, run_prediction):
+    @mo.cache
+    def predict_selected(doses, responses, grid, config_identity, configuration):
+        return models.predict_tabpfn(np.asarray(doses), np.asarray(responses), np.asarray(grid), configuration)
+
+    if model_config.is_error():
+        tab_prediction = Error(model_config.error)
+    elif not run_prediction.value:
+        tab_prediction = Error('TabPFN not evaluated for this selection')
+    elif measurements is None or not measurements.height:
+        tab_prediction = Error('No valid observations for prediction')
     else:
-        _meas_df, _ = meas_res.ok
-        doses_arr = _meas_df["dose"].to_numpy()
-        viabs_arr = _meas_df["viability"].to_numpy()
+        tab_prediction = predict_selected(tuple(measurements['dose']), tuple(measurements['viability']), tuple(prediction_grid), model_config_identity, model_config.ok)
+    return (tab_prediction,)
 
-        fit_res = fit_hill(doses_arr, viabs_arr)
-        grid_x = np.logspace(np.log10(min(doses_arr) * 0.7), np.log10(max(doses_arr) * 1.3), 120)
 
-        if fit_res.is_ok():
-            fit_val = fit_res.ok
-            pred_hill = fit_val["fit"].fit_fn(grid_x, *fit_val["fit"].popt)
-            ec50 = fit_val["ec50"]
-            slope = fit_val["slope"]
-            r2 = fit_val["r2"]
-            lo_ec = fit_val["lo_ec"]
-            hi_ec = fit_val["hi_ec"]
-            ci_band = fit_val["ci_band"]
-        else:
-            pred_hill = np.full(len(grid_x), np.mean(viabs_arr))
-            ec50 = float(np.median(doses_arr))
-            slope = 0.0
-            r2 = 0.0
-            lo_ec, hi_ec = float(min(doses_arr)), float(max(doses_arr))
-            ci_band = 0.05
-
-        pred_tab = predict_tabpfn(doses_arr, viabs_arr, grid_x)
-
-        drc_fig = build_drc_plot(
-            doses=doses_arr,
-            viabs=viabs_arr,
-            grid_x=grid_x,
-            pred_hill=pred_hill,
-            pred_tabpfn=pred_tab,
-            ec50=ec50,
-            lo_ec=lo_ec,
-            hi_ec=hi_ec,
-            ci_band=ci_band,
-            active_dose=drc_conc_slider.value,
-            drug=drc_drug_select.value,
-            cell_line=drc_cell_select.value,
-        )
-
-        drc_csv = _meas_df.select(["dose", "viability", "response", "screen_id", "well"]).write_csv()
-
-        drc_stats = mo.md(
-            f"- **Potency (EC50):** `{ec50:.4f} μM`\n"
-            f"- **Hill Slope (|nH|):** `{abs(slope):.2f}`\n"
-            f"- **Fit Quality (R²):** `{r2:.3f}`\n"
-            f"- **Transition Dynamic Window [EC20, EC80]:** `[{lo_ec:.4f}, {hi_ec:.4f}] μM`\n"
-            f"- **Active Cursor Concentration:** `{drc_conc_slider.value:.4g} μM`\n"
-            f"- **Replicate Count:** `{len(doses_arr)} points`"
-        )
-
-    drc_download_btn = mo.download(
-        data=drc_csv,
-        filename=f"drc_{drc_drug_select.value}_{drc_cell_select.value}.csv",
-        mimetype="text/csv",
-        label="Export Curve Data (CSV)",
-    )
-
-    drc_view = mo.vstack(
-        [
-            mo.md("### Dose–Response Explorer"),
-            mo.md(
-                "Pharmacodynamic calibration comparing observed PRISM viability measurements (120h), "
-                "parametric 4-parameter log-logistic (LL4) Hill regression, and pretrained TabPFN zero-shot prior."
-            ),
-            mo.hstack([drc_drug_select, drc_cell_select, drc_conc_slider], justify="start", gap=2),
-            mo.hstack([drc_download_btn], justify="start"),
-            mo.hstack([mo.ui.plotly(drc_fig)], justify="start") if drc_fig else mo.md("No figure available"),
-            mo.md("#### Model Fit & Transition Parameters"),
-            drc_stats,
-            mo.md(
-                "> **Model Notes:** The TabPFN prior is evaluated without parameter optimization on the target curve. "
-                "Confidence intervals reflect parameter uncertainty under independent replicate errors."
-            ),
-        ],
-        gap=1.5,
-    )
+@app.cell
+def _(cell_select, components, compound_select, concentration_cursor, hill_fit, measurement_exclusions, measurement_result, measurements, mo, model_config, prediction_grid, run_benchmark, run_prediction, screen_select, tab_prediction):
+    if measurements is None or not measurements.height:
+        dose_content = mo.md(measurement_result.error if measurement_result.is_error() else 'No valid measurements; inspect input exclusions.')
+    else:
+        dose_figure = components.build_drc_plot(measurements['dose'].to_numpy(), measurements['viability'].to_numpy(), prediction_grid,
+            hill_fit, tab_prediction.ok if tab_prediction.is_ok() else None,
+            concentration_cursor.value, compound_select.selected_key or '', cell_select.selected_key or '',
+            f"TabPFN {model_config.ok['model_version']} conditioned on observations" if model_config.is_ok() else None)
+        dose_content = mo.vstack([
+            mo.ui.plotly(dose_figure),
+            mo.md(f'Fit: {hill_fit.status}. ' + (hill_fit.reason or f'EC50 {hill_fit.ec50:.4g} μM; slope {hill_fit.hill_slope:.4g}; R² {hill_fit.r2:.4f}; RMSE {hill_fit.rmse:.4f}.')),
+            mo.md('; '.join(hill_fit.diagnostics.get('flags', [])) or 'No diagnostic flags recorded.'),
+            mo.md(tab_prediction.error if tab_prediction.is_error() else 'TabPFN predictions conditioned on this curve’s measured examples.'),
+            mo.download(measurement_result.ok.write_csv().encode(), filename='selected_measurements.csv', label='Export current observations, including missing responses'),
+            mo.accordion({'Excluded observations': measurement_exclusions}),
+        ])
+    drc_view = mo.vstack([
+        mo.md('### Dose–Response'),
+        mo.hstack([compound_select, cell_select, screen_select], wrap=True),
+        concentration_cursor,
+        mo.hstack([run_prediction, run_benchmark], wrap=True),
+        dose_content,
+        mo.md('EC50 is the fitted response midpoint. EC20–EC80 describes inhibition of the fitted effect span, not absolute viability or uncertainty. Measurements remain separated by compound identifier and screen.'),
+    ])
     return (drc_view,)
 
 
 @app.cell
-def _(bbbc021, mo):
-    imaging_cpd_select = mo.ui.dropdown(
-        options=bbbc021["compounds"],
-        value="taxol",
-        label="Compound",
-    )
-    return (imaging_cpd_select,)
-
-
-@app.cell
-def _(bbbc021, imaging_cpd_select, mo, pl):
-    avail_doses = sorted(
-        bbbc021["meta"]
-        .filter(pl.col("Image_Metadata_Compound") == imaging_cpd_select.value)["Image_Metadata_Concentration"]
-        .unique()
-        .to_list()
-    )
-
-    imaging_conc_select = mo.ui.dropdown(
-        options=avail_doses,
-        value=avail_doses[len(avail_doses) // 2] if avail_doses else 0.01,
-        label="Treated Concentration (μM)",
-    )
-    return avail_doses, imaging_conc_select
-
-
-@app.cell
-def _(
-    bbbc021,
-    build_umap_plot,
-    imaging_conc_select,
-    imaging_cpd_select,
-    load_microscopy_rgb,
-    mo,
-    pl,
-):
-    dmso_rows = bbbc021["meta"].filter(pl.col("Image_Metadata_Compound") == "DMSO")
-    dmso_row = dmso_rows.row(0, named=True) if dmso_rows.height > 0 else None
-
-    matched_rows = bbbc021["meta"].filter(
-        (pl.col("Image_Metadata_Compound") == imaging_cpd_select.value)
-        & (pl.col("Image_Metadata_Concentration") == imaging_conc_select.value)
-    )
-    matched_row = matched_rows.row(0, named=True) if matched_rows.height > 0 else None
-
-    if dmso_row is not None and matched_row is not None:
-        rgb_ctl = load_microscopy_rgb(
-            "data/bbbc021/plate.zip",
-            "Week1_22123",
-            dmso_row["Image_FileName_DAPI"],
-            dmso_row["Image_FileName_Tubulin"],
-            dmso_row["Image_FileName_Actin"],
-        )
-        rgb_trt = load_microscopy_rgb(
-            "data/bbbc021/plate.zip",
-            "Week1_22123",
-            matched_row["Image_FileName_DAPI"],
-            matched_row["Image_FileName_Tubulin"],
-            matched_row["Image_FileName_Actin"],
-        )
-
-        micro_viewer = mo.hstack(
-            [
-                mo.vstack(
-                    [
-                        mo.md(f"**Vehicle Control (DMSO, 0.00 μM)**<br>Well {dmso_row['Image_Metadata_Well_DAPI']} | Field {dmso_row['ImageNumber']}"),
-                        mo.image(rgb_ctl, width=330, caption="Vehicle Control (MCF-7)"),
-                    ]
-                ),
-                mo.vstack(
-                    [
-                        mo.md(f"**Treated Condition ({imaging_cpd_select.value}, {imaging_conc_select.value} μM)**<br>Well {matched_row['Image_Metadata_Well_DAPI']} | Field {matched_row['ImageNumber']}"),
-                        mo.image(rgb_trt, width=330, caption=f"Treated ({imaging_cpd_select.value} @ {imaging_conc_select.value} μM)"),
-                    ]
-                ),
-            ],
-            justify="start",
-            gap=2,
-        )
+def _(Error, benchmark, measurements, run_benchmark, cell_select, compound_select, screen_select, model_config):
+    if run_benchmark.value and measurements is not None and measurements.height:
+        evaluation = benchmark.evaluate_curve(measurements, f'{compound_select.value}/{cell_select.value}/{screen_select.value}',
+            models=('Hill LL4', 'Mean baseline', 'Segmented') + (('TabPFN',) if model_config.is_ok() else ()),
+            tabpfn=model_config.ok if model_config.is_ok() else None)
     else:
-        micro_viewer = mo.md("Microscopy images unavailable for the selected condition.")
+        evaluation = Error('Not evaluated: run held-out concentration evaluation for the selected curve')
+    return (evaluation,)
 
-    umap_fig = build_umap_plot(
-        bbbc021["df_umap"],
-        imaging_cpd_select.value,
-        imaging_conc_select.value,
-    )
 
-    imaging_view = mo.vstack(
-        [
-            mo.md("### High-Content Fluorescence Microscopy (BBBC021)"),
-            mo.md(
-                "> **Modality Separation:** BBBC021 microscopy measures cytoskeletal and morphological state changes "
-                "in MCF-7 breast carcinoma cells after 24 hours of exposure. It represents an independent imaging assay distinct from 120-hour PRISM pooled viability."
-            ),
-            mo.hstack([imaging_cpd_select, imaging_conc_select], justify="start", gap=2),
-            mo.md("#### 2D Cell-DINO ViT-S/8 Morphological Feature Space"),
-            mo.hstack([mo.ui.plotly(umap_fig)], justify="start"),
-            mo.md("#### Side-by-Side Optical Microscopy Comparison"),
-            mo.md("*Fluorescence Channels: Red = Actin (Phalloidin), Green = Tubulin (Microtubules), Blue = DAPI (Nuclei)*"),
-            micro_viewer,
-        ],
-        gap=1.5,
-    )
+@app.cell
+def _(microscopy, mo, provenance, Path):
+    image_identity = tuple((str(p), provenance.sha256(p)) for p in [Path('data/bbbc021/metadata.csv')] if p.is_file())
+    @mo.cache
+    def read_image_metadata(identity):
+        return microscopy.load_metadata()
+    image_metadata = read_image_metadata(image_identity)
+    imaging_options = sorted(image_metadata.ok['Image_Metadata_Compound'].unique().to_list()) if image_metadata.is_ok() else []
+    imaging_compound = mo.ui.dropdown(imaging_options, value='taxol' if 'taxol' in imaging_options else next(iter(imaging_options), None), label='Imaging compound')
+    return image_metadata, imaging_compound
+
+
+@app.cell
+def _(image_metadata, imaging_compound, mo, pl):
+    image_doses = sorted(image_metadata.ok.filter(pl.col('Image_Metadata_Compound') == imaging_compound.value)['Image_Metadata_Concentration'].drop_nulls().unique().to_list()) if image_metadata.is_ok() else []
+    imaging_dose = mo.ui.dropdown(image_doses, value=image_doses[len(image_doses)//2] if image_doses else None, label='Imaging concentration (μM)')
+    return (imaging_dose,)
+
+
+@app.cell
+def _(image_metadata, imaging_compound, imaging_dose, mo, pl):
+    field_rows = image_metadata.ok.filter((pl.col('Image_Metadata_Compound') == imaging_compound.value) & (pl.col('Image_Metadata_Concentration') == imaging_dose.value)) if image_metadata.is_ok() else None
+    field_options = {f"Well {r['Image_Metadata_Well_DAPI']} · field {r['ImageNumber']} · replicate {r['Replicate']}":r['image_field_id'] for r in field_rows.iter_rows(named=True)} if field_rows is not None else {}
+    field_select = mo.ui.dropdown(field_options, value=next(iter(field_options), None), label='Image field')
+    return (field_select,)
+
+
+@app.cell
+def _(Error, embeddings, image_metadata, mo):
+    @mo.cache
+    def read_projection(metadata):
+        return embeddings.configured_projection(metadata)
+    projection = read_projection(image_metadata.ok) if image_metadata.is_ok() else Error(image_metadata.error)
+    return (projection,)
+
+
+@app.cell
+def _(components, field_select, image_metadata, imaging_compound, imaging_dose, microscopy, mo, pl, projection):
+    image_parts = []
+    if image_metadata.is_error():
+        image_parts.append(mo.md(image_metadata.error))
+    elif field_select.value:
+        treated = image_metadata.ok.filter(pl.col('image_field_id') == field_select.value).row(0, named=True)
+        rgb = microscopy.load_microscopy_rgb('data/bbbc021/plate.zip', treated)
+        condition_label = 'Vehicle control (DMSO)' if treated['Image_Metadata_Compound'] == 'DMSO' else f"{treated['Image_Metadata_Compound']} · {treated['Image_Metadata_Concentration']} μM"
+        image_parts.append(mo.md(f"{condition_label} · {treated['image_field_id']}"))
+        image_parts.append(mo.image(rgb.ok, width=440, alt=f"Treated field: {treated['image_field_id']}") if rgb.is_ok() else mo.md(rgb.error))
+        control = microscopy.select_control(image_metadata.ok, treated)
+        if control.is_ok():
+            control_rgb = microscopy.load_microscopy_rgb('data/bbbc021/plate.zip', control.ok)
+            image_parts.append(mo.md(f"Vehicle control (DMSO) · {control.ok['image_field_id']}. Same plate and replicate group; acquisition matching beyond metadata unverified. First field by stable identifier."))
+            image_parts.append(mo.image(control_rgb.ok, width=440, alt='Vehicle control DMSO') if control_rgb.is_ok() else mo.md(control_rgb.error))
+        else:
+            image_parts.append(mo.md(control.error))
+    else:
+        image_parts.append(mo.md('No microscopy field for the selected condition.'))
+    image_parts.append(mo.md(projection.error) if projection.is_error() else mo.ui.plotly(components.build_umap_plot(projection.ok, imaging_compound.value, imaging_dose.value)))
+    imaging_view = mo.vstack([
+        mo.md('### Cell Imaging'),
+        mo.md(f"Available metadata fields on Week1_22123: {image_metadata.ok.height if image_metadata.is_ok() else 'unavailable'}. Fields analyzed with verified embeddings: {projection.ok.height if projection.is_ok() else 'unavailable'}."),
+        mo.hstack([imaging_compound, imaging_dose, field_select], wrap=True),
+        *image_parts,
+        mo.md('Contrast-adjusted RGB: red actin, green tubulin, blue DAPI. Raw intensities are unchanged. BBBC021 and PRISM observations are not paired.'),
+        mo.md('UMAP can distort distances and global geometry. Lines connect concentration-group centroids for visualization; they do not represent measured temporal trajectories. Clusters alone do not establish mechanisms.'),
+    ])
     return (imaging_view,)
 
 
 @app.cell
-def _(build_generalization_plot, build_validation_plot, mo, pl):
-    val_df = pl.read_csv("reports/independent_validation_summary.csv")
-    val_csv = val_df.write_csv()
+def _(validation):
+    external_result = validation.load_configured_validation()
+    return (external_result,)
 
-    val_download_btn = mo.download(
-        data=val_csv,
-        filename="independent_validation_summary.csv",
-        mimetype="text/csv",
-        label="Export Validation Matrix (CSV)",
-    )
 
-    val_kpis = mo.hstack(
-        [
-            mo.stat(value="5,572 Condition Pairs", label="Cross-Consortium Overlap", caption="Tri-matched across PRISM, GDSC2, CTRPv2"),
-            mo.stat(value="5 / 8 Candidates", label="Potency Concordance", caption="Consistent low-nanomolar activity replicated"),
-            mo.stat(value="r = 0.60 (GDSC2) / 0.39 (CTRPv2)", label="Potency Correlation", caption="p < 10⁻²⁶⁸ across all tri-matched pairs"),
-            mo.stat(value="Assay Differences", label="Platform Variation", caption="120h pooled viability vs 72h CellTiter-Glo ATP"),
-        ],
-        justify="space-between",
-        gap=2,
-    )
-
-    fig_val = build_validation_plot()
-    fig_gen = build_generalization_plot()
-
-    validation_view = mo.vstack(
-        [
-            mo.md("### Cross-Dataset Experimental Concordance & Model Benchmarks"),
-            mo.md(
-                "Evaluation of candidate steep responses against independent experimental datasets from the "
-                "**Genomics of Drug Sensitivity in Cancer (GDSC2, 72h)** and the **Cancer Therapeutics Response Portal (CTRPv2, 72h)** "
-                "using standardized Cellosaurus and DepMap identifiers."
-            ),
-            val_kpis,
-            mo.hstack([val_download_btn], justify="start"),
-            mo.md("#### Independent Validation Summary (10 Characterized Cases)"),
-            mo.ui.table(val_df, selection=None),
-            mo.md("#### Potency & Hill Slope Concordance (PRISM vs External Consortia)"),
-            mo.hstack([mo.ui.plotly(fig_val)], justify="start"),
-            mo.md("#### Dose-Level Generalization Benchmark (Out-of-Sample Held-Out Doses)"),
-            mo.hstack([mo.ui.plotly(fig_gen)], justify="start"),
-            mo.md(
-                "- **Replicated Potency:** Proteasome inhibitors (Bortezomib) and taxanes (Docetaxel in MDA-MB-231 and KYSE-270) show consistent low-nanomolar potency across independent consortia.\n"
-                "- **Documented Slope Discrepancies:** CTRPv2 confirms steep Hill slopes for Bortezomib (|nH| > 3.6), but shows standard mass-action slope for Docetaxel in MDA-MB-231 (|nH| = 1.25), indicating that steepness in PRISM can reflect platform-specific assay sensitivity. GDSC2 does not report Hill slopes.\n"
-                "- **Negative Findings & Fit Failures:** Paclitaxel on NUGC-3 shows profound resistance in CTRPv2 (6.01 μM vs 8.4 nM in PRISM); Docetaxel on KU-19-19 and Paclitaxel on MKN1 failed CTRPv2 curve fit quality criteria (R² < 0.45).\n"
-                "- **Epistemological Guardrail:** Concordant potency across static viability screens confirms chemical activity, not dynamical bistable cell-fate commitment."
-            ),
-        ],
-        gap=1.5,
-    )
+@app.cell
+def _(benchmark, components, evaluation, external_result, mo, validation, pl):
+    validation_parts = [mo.md('### External dataset comparison')]
+    if external_result.is_error():
+        validation_parts.append(mo.md(external_result.error))
+    else:
+        matched, external_tables, external_counts, external_config = external_result.ok
+        validation_parts.extend([
+            mo.md(f'Matched conditions with identical metric definitions: {matched.height}'),
+            mo.ui.table(pl.DataFrame(external_counts), selection=None),
+            mo.ui.table(validation.compare_potencies(matched).ok, selection=None),
+            mo.ui.table(matched, selection=None),
+            mo.download(matched.write_csv().encode(), filename='matched_external_measurements.csv', label='Export matched measurements'),
+            mo.ui.plotly(components.build_validation_plot(matched, {'reference':external_config['reference']['source']['dataset'],'external':external_config['external']['source']['dataset']})),
+        ])
+    validation_parts.append(mo.md('### Held-out concentration prediction'))
+    if evaluation.is_error():
+        validation_parts.append(mo.md(evaluation.error))
+    else:
+        metrics = benchmark.aggregate_predictions(evaluation.ok)
+        validation_parts.extend([mo.ui.table(metrics.with_columns(pl.col('rmse', 'common_rmse').cast(pl.String).fill_null('Not evaluated')), selection=None), mo.ui.plotly(components.build_generalization_plot(metrics)),
+                                  mo.download(evaluation.ok.write_csv().encode(), filename='held_out_predictions.csv', label='Export predictions and failures')])
+    validation_parts.append(mo.md('Pooled observation RMSE weights curves by observation count. Common RMSE compares identical successful observations across models; failures remain counted. This evaluates held-out concentrations within the selected curve, not unseen compound–cell-line combinations. No transition-zone benchmark or significance test.'))
+    validation_view = mo.vstack(validation_parts)
     return (validation_view,)
 
 
 @app.cell
-def _(mo):
-    methods_view = mo.vstack(
-        [
-            mo.md("### Experimental & Computational Methods"),
-            mo.md(
-                "#### Experimental Datasets & Provenance\n"
-                "- **PRISM Viability Screen:** 120-hour multiplexed pooled cell-viability assay profiling 1,448 compounds across 481 cancer cell lines using genomic barcode quantification (Corsello et al., *Nature Cancer* 2020).\n"
-                "- **BBBC021 Microscopy:** High-content fluorescence imaging of MCF-7 human breast carcinoma cells exposed for 24 hours across 38 compound conditions (Caie et al., *Mol Cancer Ther* 2010; Ljosa et al., *Nat Methods* 2012). Channels: Actin (Phalloidin), Tubulin (Antibody), DNA (DAPI).\n"
-                "- **GDSC2 Sensitivity Screen:** Independent 72-hour pharmacological screen utilizing CellTiter-Glo ATP luminescent viability across cancer cell lines (Iorio et al., *Cell* 2016).\n"
-                "- **CTRPv2 Screening Portal:** Broad Institute 72-hour CellTiter-Glo sensitivity screen across cancer models (Rees et al., *Nat Chem Biol* 2016)."
-            ),
-            mo.md(
-                "#### Computational Modeling & Statistical Procedures\n"
-                "- **Parametric Hill Fitting:** Monotherapy dose–response data are modeled using a 4-parameter log-logistic function ($LL4$) fit via non-linear least squares (`thunor.curve_fit` / `scipy.optimize.curve_fit`):\n"
-                "  $$y(x) = c + \\frac{d - c}{1 + (x / EC_{50})^{-b}}$$\n"
-                "  where $b$ is the Hill slope, $c$ is the lower asymptote, $d$ is the upper asymptote, and $EC_{50}$ is the half-maximal inflection dose.\n"
-                "- **TabPFN Foundation Regressor:** Pretrained PriorLabs TabPFN-3.5-Fast / v2 in-context transformer evaluated in zero-shot inference mode over $\\log_{10}$-transformed concentrations without fine-tuning.\n"
-                "- **Deep Morphological Embeddings:** Cell-DINO ViT-S/8 vision transformer applied to full-resolution fluorescence fields ($1024 \\times 1280$), generating 384-dimensional whole-field feature representations.\n"
-                "- **Multiple Testing Correction:** Hypotheses testing for steep response ($H_0: |n_H| \\le 1.0$) evaluated via Benjamini–Hochberg False Discovery Rate ($q < 0.05$)."
-            ),
-            mo.md(
-                "#### Literature Citations\n"
-                "1. Corsello, S. M. et al. Discovering the anti-cancer potential of non-oncology drugs by systematic viability profiling. *Nature Cancer* 1, 235–248 (2020). DOI: [10.1038/s43018-019-0018-6](https://doi.org/10.1038/s43018-019-0018-6)\n"
-                "2. Iorio, F. et al. A Landscape of Pharmacogenomic Interactions in Cancer. *Cell* 166(3), 740–754 (2016). DOI: [10.1016/j.cell.2016.06.017](https://doi.org/10.1016/j.cell.2016.06.017)\n"
-                "3. Rees, M. G. et al. Correlating chemical sensitivity and basal gene expression. *Nature Chemical Biology* 12, 109–116 (2016). DOI: [10.1038/nchembio.1986](https://doi.org/10.1038/nchembio.1986)\n"
-                "4. Caie, P. D. et al. High-Content Phenotypic Profiling of Chemically Induced Cytoskeletal Alterations. *Mol Cancer Ther* 9(6), 1913–1926 (2010).\n"
-                "5. Hollmann, N. et al. Accurate predictions on small data with a tabular foundation model. *Nature* (2025).\n"
-                "6. Oquab, M. et al. DINOv2: Learning Robust Visual Features without Supervision. *arXiv:2304.07193* (2023)."
-            ),
-            mo.md(
-                "#### System & Environment\n"
-                "- **Platform:** Linux x86_64, Python 3.13, PyTorch 2.6.0 (CUDA 7.5 Capability), Polars, Marimo, Plotly.\n"
-                "- **Reproducibility:** Seed 42, deterministic preprocessing, leak-free dose-level cross-validation."
-            ),
-        ],
-        gap=1.5,
-    )
+def _(Path, mo, provenance):
+    methods_view = mo.vstack([mo.md(Path('METHODS.md').read_text()), mo.ui.table([provenance.versions()], selection=None)])
     return (methods_view,)
 
 
 @app.cell
-def _(
-    drc_view,
-    imaging_view,
-    methods_view,
-    mo,
-    overview_view,
-    validation_view,
-):
-    nav_tabs = mo.ui.tabs(
-        {
-            "Overview": overview_view,
-            "Dose–Response": drc_view,
-            "Cell Imaging": imaging_view,
-            "Validation": validation_view,
-            "Methods": methods_view,
-        }
-    )
-
-    header = mo.vstack(
-        [
-            mo.md("# Phenotypic Drug-Response Atlas"),
-            mo.md(
-                "**Functional Pharmacogenomics & Deep Morphological Phenotyping**<br>"
-                "*PRISM 120h Viability (481 Cell Lines) • BBBC021 MCF-7 Microscopy (Cell-DINO ViT-S/8) • "
-                "TabPFN Foundation Prior • GDSC2 & CTRPv2 Independent Validation*"
-            ),
-        ],
-        gap=0.5,
-    )
-
-    app_view = mo.vstack([header, nav_tabs], gap=1.5)
-    app_view
-    return app_view, header, nav_tabs
+def _(drc_view, imaging_view, methods_view, mo, overview_view, validation_view):
+    application_view = mo.vstack([
+        mo.md('# Phenotypic Drug-Response Atlas'),
+        mo.md('Drug response and cell morphology. Static dose responses do not establish irreversible cell-state switching.'),
+        mo.ui.tabs({'Overview': overview_view, 'Dose–Response': drc_view, 'Cell Imaging': imaging_view, 'Validation': validation_view, 'Methods': methods_view}),
+    ])
+    application_view
+    return (application_view,)
 
 
-if __name__ == "__main__":
+if __name__ == '__main__':
     app.run()

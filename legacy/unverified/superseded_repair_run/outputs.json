@@ -1,0 +1,14 @@
+{
+  "manifest.json": "0bffc00644853bbdd51e8f887ede57838e8168dc91bd1bffa4616d264ac3075c",
+  "model_benchmark.csv": "a6be37e8b5d6a5618b138f44ba75c34654a8fba5eaf654fe51082c5db8f5b794",
+  "observation_exclusions.csv": "cdb2429a59feb7c5381fbfbfe5b1634af627c6aee547c6e8a86a70c0a874dcda",
+  "catalog_exclusions.csv": "0003fe9a04c3d45edd7f0f6df08879401c696fae6dc12696be7c61d8dd630f58",
+  "held_out_predictions.csv": "290ceb93591a192fb870e43661ee56e6d4e1c651b99013fa5a89ce71935b612d",
+  "shortlist.csv": "f177be960be006a7bbbd54ddd23c6a2b3faf5493f545a1a69b92c00419bfff4d",
+  "eligible_catalog.csv": "3c239a258f2f5edf904f5c53d6440296919e10a3bc8325bbaad099c16bc5ab83",
+  "held_out_benchmark.html": "8bb5aab7beb097d5cfe1577671640d77a2cb664d1942a8545eba3e98e87ca75d",
+  "dose_response.html": "70cfda9220350f0c17bdc43b1a6dba13d68c83251de51660e91603100584e7b2",
+  "selected_observations.csv": "ab3ea4e571b00e0a1f94120dd3ea5d85151582a34a91386b2b1c4421337a6556",
+  "REPORT.md": "717f034f6d828fa914f85851e1568572bc6cd022faa9dc3056898dda3f9f7418",
+  "selected_fit.json": "198ffa27c8a67607f16b88c13d9d3808f44b8416b95aa0953ec5d22dcc52ad11"
+}

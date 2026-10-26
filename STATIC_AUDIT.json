@@ -1,0 +1,1077 @@
+[
+  {
+    "path": "analysis/models.py",
+    "line": 39,
+    "terms": [
+      "validated"
+    ],
+    "classification": "valid input-validation variable; not a scientific validation claim"
+  },
+  {
+    "path": "analysis/models.py",
+    "line": 40,
+    "terms": [
+      "validated"
+    ],
+    "classification": "valid input-validation variable; not a scientific validation claim"
+  },
+  {
+    "path": "analysis/models.py",
+    "line": 41,
+    "terms": [
+      "validated"
+    ],
+    "classification": "valid input-validation variable; not a scientific validation claim"
+  },
+  {
+    "path": "analysis/models.py",
+    "line": 42,
+    "terms": [
+      "validated"
+    ],
+    "classification": "valid input-validation variable; not a scientific validation claim"
+  },
+  {
+    "path": "analysis/fitting.py",
+    "line": 47,
+    "terms": [
+      "validated"
+    ],
+    "classification": "valid input-validation variable; not a scientific validation claim"
+  },
+  {
+    "path": "analysis/fitting.py",
+    "line": 48,
+    "terms": [
+      "validated"
+    ],
+    "classification": "valid input-validation variable; not a scientific validation claim"
+  },
+  {
+    "path": "analysis/fitting.py",
+    "line": 49,
+    "terms": [
+      "validated"
+    ],
+    "classification": "valid input-validation variable; not a scientific validation claim"
+  },
+  {
+    "path": "analysis/fitting.py",
+    "line": 50,
+    "terms": [
+      "validated"
+    ],
+    "classification": "valid input-validation variable; not a scientific validation claim"
+  },
+  {
+    "path": "tests/test_ui.py",
+    "line": 53,
+    "terms": [
+      "se_slopes",
+      "norm.cdf",
+      "false_discovery_control",
+      "fdr_q",
+      "Evidence Tier"
+    ],
+    "classification": "test fixture or regression assertion"
+  },
+  {
+    "path": "tests/test_catalog.py",
+    "line": 32,
+    "terms": [
+      "p_value"
+    ],
+    "classification": "test fixture or regression assertion"
+  },
+  {
+    "path": "IMPLEMENTATION_CHANGES.md",
+    "line": 10,
+    "terms": [
+      "validated"
+    ],
+    "classification": "audit or methods documentation; not empirical result generation"
+  },
+  {
+    "path": "SCIENTIFIC_AUDIT.md",
+    "line": 12,
+    "terms": [
+      "95% Confidence Interval"
+    ],
+    "classification": "audit or methods documentation; not empirical result generation"
+  },
+  {
+    "path": "SCIENTIFIC_AUDIT.md",
+    "line": 69,
+    "terms": [
+      "Publication-Quality",
+      "5,572",
+      "publication-quality"
+    ],
+    "classification": "audit or methods documentation; not empirical result generation"
+  },
+  {
+    "path": "legacy/unverified/originals/figures__fig2_model_benchmark.svg",
+    "line": 1,
+    "terms": [
+      "Leak-Free",
+      "0.095",
+      "0.108",
+      "0.185",
+      "leak-free"
+    ],
+    "classification": "historical unverified artifact; quarantined, not executable or consumed"
+  },
+  {
+    "path": "legacy/unverified/originals/RESEARCH_REPORT.md",
+    "line": 12,
+    "terms": [
+      "Leak-Free",
+      "leak-free"
+    ],
+    "classification": "historical unverified artifact; quarantined, not executable or consumed"
+  },
+  {
+    "path": "legacy/unverified/originals/RESEARCH_REPORT.md",
+    "line": 16,
+    "terms": [
+      "Leak-Free",
+      "0.095",
+      "0.108",
+      "0.185",
+      "leak-free"
+    ],
+    "classification": "historical unverified artifact; quarantined, not executable or consumed"
+  },
+  {
+    "path": "legacy/unverified/originals/RESEARCH_REPORT.md",
+    "line": 52,
+    "terms": [
+      "Leak-Free",
+      "leak-free"
+    ],
+    "classification": "historical unverified artifact; quarantined, not executable or consumed"
+  },
+  {
+    "path": "legacy/unverified/originals/RESEARCH_REPORT.md",
+    "line": 74,
+    "terms": [
+      "Evidence Tier"
+    ],
+    "classification": "historical unverified artifact; quarantined, not executable or consumed"
+  },
+  {
+    "path": "legacy/unverified/originals/RESEARCH_REPORT.md",
+    "line": 81,
+    "terms": [
+      "High Evidence"
+    ],
+    "classification": "historical unverified artifact; quarantined, not executable or consumed"
+  },
+  {
+    "path": "legacy/unverified/originals/RESEARCH_REPORT.md",
+    "line": 93,
+    "terms": [
+      "Leak-Free",
+      "leak-free"
+    ],
+    "classification": "historical unverified artifact; quarantined, not executable or consumed"
+  },
+  {
+    "path": "legacy/unverified/originals/RESEARCH_REPORT.md",
+    "line": 97,
+    "terms": [
+      "0.095"
+    ],
+    "classification": "historical unverified artifact; quarantined, not executable or consumed"
+  },
+  {
+    "path": "legacy/unverified/originals/RESEARCH_REPORT.md",
+    "line": 98,
+    "terms": [
+      "0.108"
+    ],
+    "classification": "historical unverified artifact; quarantined, not executable or consumed"
+  },
+  {
+    "path": "legacy/unverified/originals/RESEARCH_REPORT.md",
+    "line": 99,
+    "terms": [
+      "0.185"
+    ],
+    "classification": "historical unverified artifact; quarantined, not executable or consumed"
+  },
+  {
+    "path": "legacy/unverified/originals/RESEARCH_REPORT.md",
+    "line": 141,
+    "terms": [
+      "Publication-Quality",
+      "publication-quality"
+    ],
+    "classification": "historical unverified artifact; quarantined, not executable or consumed"
+  },
+  {
+    "path": "legacy/unverified/originals/RESEARCH_REPORT.md",
+    "line": 144,
+    "terms": [
+      "95% Confidence Interval"
+    ],
+    "classification": "historical unverified artifact; quarantined, not executable or consumed"
+  },
+  {
+    "path": "legacy/unverified/originals/RESEARCH_REPORT.md",
+    "line": 146,
+    "terms": [
+      "Leak-Free",
+      "leak-free"
+    ],
+    "classification": "historical unverified artifact; quarantined, not executable or consumed"
+  },
+  {
+    "path": "legacy/unverified/originals/RESEARCH_REPORT.md",
+    "line": 171,
+    "terms": [
+      "validated"
+    ],
+    "classification": "historical unverified artifact; quarantined, not executable or consumed"
+  },
+  {
+    "path": "legacy/unverified/originals/RESEARCH_REPORT.md",
+    "line": 180,
+    "terms": [
+      "0.60"
+    ],
+    "classification": "historical unverified artifact; quarantined, not executable or consumed"
+  },
+  {
+    "path": "legacy/unverified/originals/RESEARCH_REPORT.md",
+    "line": 182,
+    "terms": [
+      "0.39"
+    ],
+    "classification": "historical unverified artifact; quarantined, not executable or consumed"
+  },
+  {
+    "path": "legacy/unverified/originals/RESEARCH_REPORT.md",
+    "line": 184,
+    "terms": [
+      "5,572"
+    ],
+    "classification": "historical unverified artifact; quarantined, not executable or consumed"
+  },
+  {
+    "path": "legacy/unverified/originals/RESEARCH_REPORT.md",
+    "line": 193,
+    "terms": [
+      "replicated",
+      "confirmed",
+      "high concordance"
+    ],
+    "classification": "historical unverified artifact; quarantined, not executable or consumed"
+  },
+  {
+    "path": "legacy/unverified/originals/RESEARCH_REPORT.md",
+    "line": 194,
+    "terms": [
+      "replicated",
+      "confirmed",
+      "high concordance"
+    ],
+    "classification": "historical unverified artifact; quarantined, not executable or consumed"
+  },
+  {
+    "path": "legacy/unverified/originals/RESEARCH_REPORT.md",
+    "line": 195,
+    "terms": [
+      "replicated",
+      "confirmed"
+    ],
+    "classification": "historical unverified artifact; quarantined, not executable or consumed"
+  },
+  {
+    "path": "legacy/unverified/originals/RESEARCH_REPORT.md",
+    "line": 196,
+    "terms": [
+      "replicated",
+      "confirmed"
+    ],
+    "classification": "historical unverified artifact; quarantined, not executable or consumed"
+  },
+  {
+    "path": "legacy/unverified/originals/RESEARCH_REPORT.md",
+    "line": 197,
+    "terms": [
+      "replicated"
+    ],
+    "classification": "historical unverified artifact; quarantined, not executable or consumed"
+  },
+  {
+    "path": "legacy/unverified/originals/RESEARCH_REPORT.md",
+    "line": 212,
+    "terms": [
+      "replicated"
+    ],
+    "classification": "historical unverified artifact; quarantined, not executable or consumed"
+  },
+  {
+    "path": "legacy/unverified/originals/reports__independent_validation_summary.csv",
+    "line": 2,
+    "terms": [
+      "replicated",
+      "high concordance"
+    ],
+    "classification": "historical unverified artifact; quarantined, not executable or consumed"
+  },
+  {
+    "path": "legacy/unverified/originals/reports__independent_validation_summary.csv",
+    "line": 3,
+    "terms": [
+      "replicated",
+      "high concordance"
+    ],
+    "classification": "historical unverified artifact; quarantined, not executable or consumed"
+  },
+  {
+    "path": "legacy/unverified/originals/reports__independent_validation_summary.csv",
+    "line": 4,
+    "terms": [
+      "replicated",
+      "confirmed"
+    ],
+    "classification": "historical unverified artifact; quarantined, not executable or consumed"
+  },
+  {
+    "path": "legacy/unverified/originals/reports__independent_validation_summary.csv",
+    "line": 5,
+    "terms": [
+      "replicated"
+    ],
+    "classification": "historical unverified artifact; quarantined, not executable or consumed"
+  },
+  {
+    "path": "legacy/unverified/originals/reports__independent_validation_summary.csv",
+    "line": 6,
+    "terms": [
+      "replicated"
+    ],
+    "classification": "historical unverified artifact; quarantined, not executable or consumed"
+  },
+  {
+    "path": "legacy/unverified/originals/reports__independent_validation_summary.csv",
+    "line": 9,
+    "terms": [
+      "replicated"
+    ],
+    "classification": "historical unverified artifact; quarantined, not executable or consumed"
+  },
+  {
+    "path": "legacy/unverified/originals/reports__top10_discoveries.csv",
+    "line": 1,
+    "terms": [
+      "fdr_q",
+      "p_value"
+    ],
+    "classification": "historical unverified artifact; quarantined, not executable or consumed"
+  },
+  {
+    "path": "legacy/unverified/originals/reports__top10_discoveries.csv",
+    "line": 2,
+    "terms": [
+      "High Evidence"
+    ],
+    "classification": "historical unverified artifact; quarantined, not executable or consumed"
+  },
+  {
+    "path": "legacy/unverified/originals/reports__top10_discoveries.csv",
+    "line": 3,
+    "terms": [
+      "High Evidence"
+    ],
+    "classification": "historical unverified artifact; quarantined, not executable or consumed"
+  },
+  {
+    "path": "legacy/unverified/originals/reports__top10_discoveries.csv",
+    "line": 4,
+    "terms": [
+      "High Evidence"
+    ],
+    "classification": "historical unverified artifact; quarantined, not executable or consumed"
+  },
+  {
+    "path": "legacy/unverified/originals/reports__top10_discoveries.csv",
+    "line": 5,
+    "terms": [
+      "High Evidence"
+    ],
+    "classification": "historical unverified artifact; quarantined, not executable or consumed"
+  },
+  {
+    "path": "legacy/unverified/originals/reports__top10_discoveries.csv",
+    "line": 6,
+    "terms": [
+      "High Evidence"
+    ],
+    "classification": "historical unverified artifact; quarantined, not executable or consumed"
+  },
+  {
+    "path": "legacy/unverified/originals/reports__top10_discoveries.csv",
+    "line": 7,
+    "terms": [
+      "High Evidence"
+    ],
+    "classification": "historical unverified artifact; quarantined, not executable or consumed"
+  },
+  {
+    "path": "legacy/unverified/originals/reports__top10_discoveries.csv",
+    "line": 8,
+    "terms": [
+      "High Evidence"
+    ],
+    "classification": "historical unverified artifact; quarantined, not executable or consumed"
+  },
+  {
+    "path": "legacy/unverified/originals/reports__top10_discoveries.csv",
+    "line": 9,
+    "terms": [
+      "High Evidence"
+    ],
+    "classification": "historical unverified artifact; quarantined, not executable or consumed"
+  },
+  {
+    "path": "legacy/unverified/originals/reports__top10_discoveries.csv",
+    "line": 10,
+    "terms": [
+      "High Evidence"
+    ],
+    "classification": "historical unverified artifact; quarantined, not executable or consumed"
+  },
+  {
+    "path": "legacy/unverified/originals/reports__top10_discoveries.csv",
+    "line": 11,
+    "terms": [
+      "High Evidence"
+    ],
+    "classification": "historical unverified artifact; quarantined, not executable or consumed"
+  },
+  {
+    "path": "legacy/unverified/originals/reports__model_benchmark.csv",
+    "line": 2,
+    "terms": [
+      "0.095"
+    ],
+    "classification": "historical unverified artifact; quarantined, not executable or consumed"
+  },
+  {
+    "path": "legacy/unverified/originals/reports__model_benchmark.csv",
+    "line": 3,
+    "terms": [
+      "0.108"
+    ],
+    "classification": "historical unverified artifact; quarantined, not executable or consumed"
+  },
+  {
+    "path": "legacy/unverified/originals/reports__model_benchmark.csv",
+    "line": 4,
+    "terms": [
+      "0.185"
+    ],
+    "classification": "historical unverified artifact; quarantined, not executable or consumed"
+  },
+  {
+    "path": "legacy/unverified/originals/figures__fig3_umap_morphology.svg",
+    "line": 1,
+    "terms": [
+      "0.39"
+    ],
+    "classification": "historical unverified artifact; quarantined, not executable or consumed"
+  },
+  {
+    "path": "legacy/unverified/originals/reports__RESEARCH_REPORT.md",
+    "line": 12,
+    "terms": [
+      "Leak-Free",
+      "leak-free"
+    ],
+    "classification": "historical unverified artifact; quarantined, not executable or consumed"
+  },
+  {
+    "path": "legacy/unverified/originals/reports__RESEARCH_REPORT.md",
+    "line": 16,
+    "terms": [
+      "Leak-Free",
+      "0.095",
+      "0.108",
+      "0.185",
+      "leak-free"
+    ],
+    "classification": "historical unverified artifact; quarantined, not executable or consumed"
+  },
+  {
+    "path": "legacy/unverified/originals/reports__RESEARCH_REPORT.md",
+    "line": 52,
+    "terms": [
+      "Leak-Free",
+      "leak-free"
+    ],
+    "classification": "historical unverified artifact; quarantined, not executable or consumed"
+  },
+  {
+    "path": "legacy/unverified/originals/reports__RESEARCH_REPORT.md",
+    "line": 74,
+    "terms": [
+      "Evidence Tier"
+    ],
+    "classification": "historical unverified artifact; quarantined, not executable or consumed"
+  },
+  {
+    "path": "legacy/unverified/originals/reports__RESEARCH_REPORT.md",
+    "line": 81,
+    "terms": [
+      "High Evidence"
+    ],
+    "classification": "historical unverified artifact; quarantined, not executable or consumed"
+  },
+  {
+    "path": "legacy/unverified/originals/reports__RESEARCH_REPORT.md",
+    "line": 93,
+    "terms": [
+      "Leak-Free",
+      "leak-free"
+    ],
+    "classification": "historical unverified artifact; quarantined, not executable or consumed"
+  },
+  {
+    "path": "legacy/unverified/originals/reports__RESEARCH_REPORT.md",
+    "line": 97,
+    "terms": [
+      "0.095"
+    ],
+    "classification": "historical unverified artifact; quarantined, not executable or consumed"
+  },
+  {
+    "path": "legacy/unverified/originals/reports__RESEARCH_REPORT.md",
+    "line": 98,
+    "terms": [
+      "0.108"
+    ],
+    "classification": "historical unverified artifact; quarantined, not executable or consumed"
+  },
+  {
+    "path": "legacy/unverified/originals/reports__RESEARCH_REPORT.md",
+    "line": 99,
+    "terms": [
+      "0.185"
+    ],
+    "classification": "historical unverified artifact; quarantined, not executable or consumed"
+  },
+  {
+    "path": "legacy/unverified/originals/reports__RESEARCH_REPORT.md",
+    "line": 141,
+    "terms": [
+      "Publication-Quality",
+      "publication-quality"
+    ],
+    "classification": "historical unverified artifact; quarantined, not executable or consumed"
+  },
+  {
+    "path": "legacy/unverified/originals/reports__RESEARCH_REPORT.md",
+    "line": 144,
+    "terms": [
+      "95% Confidence Interval"
+    ],
+    "classification": "historical unverified artifact; quarantined, not executable or consumed"
+  },
+  {
+    "path": "legacy/unverified/originals/reports__RESEARCH_REPORT.md",
+    "line": 146,
+    "terms": [
+      "Leak-Free",
+      "leak-free"
+    ],
+    "classification": "historical unverified artifact; quarantined, not executable or consumed"
+  },
+  {
+    "path": "legacy/unverified/originals/reports__RESEARCH_REPORT.md",
+    "line": 171,
+    "terms": [
+      "validated"
+    ],
+    "classification": "historical unverified artifact; quarantined, not executable or consumed"
+  },
+  {
+    "path": "legacy/unverified/originals/reports__RESEARCH_REPORT.md",
+    "line": 180,
+    "terms": [
+      "0.60"
+    ],
+    "classification": "historical unverified artifact; quarantined, not executable or consumed"
+  },
+  {
+    "path": "legacy/unverified/originals/reports__RESEARCH_REPORT.md",
+    "line": 182,
+    "terms": [
+      "0.39"
+    ],
+    "classification": "historical unverified artifact; quarantined, not executable or consumed"
+  },
+  {
+    "path": "legacy/unverified/originals/reports__RESEARCH_REPORT.md",
+    "line": 184,
+    "terms": [
+      "5,572"
+    ],
+    "classification": "historical unverified artifact; quarantined, not executable or consumed"
+  },
+  {
+    "path": "legacy/unverified/originals/reports__RESEARCH_REPORT.md",
+    "line": 193,
+    "terms": [
+      "replicated",
+      "confirmed",
+      "high concordance"
+    ],
+    "classification": "historical unverified artifact; quarantined, not executable or consumed"
+  },
+  {
+    "path": "legacy/unverified/originals/reports__RESEARCH_REPORT.md",
+    "line": 194,
+    "terms": [
+      "replicated",
+      "confirmed",
+      "high concordance"
+    ],
+    "classification": "historical unverified artifact; quarantined, not executable or consumed"
+  },
+  {
+    "path": "legacy/unverified/originals/reports__RESEARCH_REPORT.md",
+    "line": 195,
+    "terms": [
+      "replicated",
+      "confirmed"
+    ],
+    "classification": "historical unverified artifact; quarantined, not executable or consumed"
+  },
+  {
+    "path": "legacy/unverified/originals/reports__RESEARCH_REPORT.md",
+    "line": 196,
+    "terms": [
+      "replicated",
+      "confirmed"
+    ],
+    "classification": "historical unverified artifact; quarantined, not executable or consumed"
+  },
+  {
+    "path": "legacy/unverified/originals/reports__RESEARCH_REPORT.md",
+    "line": 197,
+    "terms": [
+      "replicated"
+    ],
+    "classification": "historical unverified artifact; quarantined, not executable or consumed"
+  },
+  {
+    "path": "legacy/unverified/originals/reports__RESEARCH_REPORT.md",
+    "line": 212,
+    "terms": [
+      "replicated"
+    ],
+    "classification": "historical unverified artifact; quarantined, not executable or consumed"
+  },
+  {
+    "path": "legacy/unverified/dev_notebook.py.gz",
+    "line": 2556,
+    "terms": [
+      "High Evidence"
+    ],
+    "classification": "historical unverified artifact; quarantined, not executable or consumed"
+  },
+  {
+    "path": "legacy/unverified/dev_notebook.py.gz",
+    "line": 2569,
+    "terms": [
+      "0.095",
+      "0.185"
+    ],
+    "classification": "historical unverified artifact; quarantined, not executable or consumed"
+  },
+  {
+    "path": "legacy/unverified/dev_notebook.py.gz",
+    "line": 2577,
+    "terms": [
+      "Publication-Quality",
+      "publication-quality"
+    ],
+    "classification": "historical unverified artifact; quarantined, not executable or consumed"
+  },
+  {
+    "path": "legacy/unverified/dev_notebook.py.gz",
+    "line": 2651,
+    "terms": [
+      "High Evidence"
+    ],
+    "classification": "historical unverified artifact; quarantined, not executable or consumed"
+  },
+  {
+    "path": "legacy/unverified/dev_notebook.py.gz",
+    "line": 2664,
+    "terms": [
+      "Evidence Tier"
+    ],
+    "classification": "historical unverified artifact; quarantined, not executable or consumed"
+  },
+  {
+    "path": "legacy/unverified/dev_notebook.py.gz",
+    "line": 2677,
+    "terms": [
+      "Evidence Tier",
+      "High Evidence"
+    ],
+    "classification": "historical unverified artifact; quarantined, not executable or consumed"
+  },
+  {
+    "path": "legacy/unverified/dev_notebook.py.gz",
+    "line": 2690,
+    "terms": [
+      "Evidence Tier"
+    ],
+    "classification": "historical unverified artifact; quarantined, not executable or consumed"
+  },
+  {
+    "path": "legacy/unverified/dev_notebook.py.gz",
+    "line": 3056,
+    "terms": [
+      "se_slopes",
+      "np.sqrt(8.0)"
+    ],
+    "classification": "historical unverified artifact; quarantined, not executable or consumed"
+  },
+  {
+    "path": "legacy/unverified/dev_notebook.py.gz",
+    "line": 3057,
+    "terms": [
+      "se_slopes"
+    ],
+    "classification": "historical unverified artifact; quarantined, not executable or consumed"
+  },
+  {
+    "path": "legacy/unverified/dev_notebook.py.gz",
+    "line": 3058,
+    "terms": [
+      "norm.cdf",
+      "p_value"
+    ],
+    "classification": "historical unverified artifact; quarantined, not executable or consumed"
+  },
+  {
+    "path": "legacy/unverified/dev_notebook.py.gz",
+    "line": 3059,
+    "terms": [
+      "false_discovery_control",
+      "p_value"
+    ],
+    "classification": "historical unverified artifact; quarantined, not executable or consumed"
+  },
+  {
+    "path": "legacy/unverified/dev_notebook.py.gz",
+    "line": 3064,
+    "terms": [
+      "p_value"
+    ],
+    "classification": "historical unverified artifact; quarantined, not executable or consumed"
+  },
+  {
+    "path": "legacy/unverified/dev_notebook.py.gz",
+    "line": 3065,
+    "terms": [
+      "fdr_q"
+    ],
+    "classification": "historical unverified artifact; quarantined, not executable or consumed"
+  },
+  {
+    "path": "legacy/unverified/dev_notebook.py.gz",
+    "line": 3069,
+    "terms": [
+      "fdr_q"
+    ],
+    "classification": "historical unverified artifact; quarantined, not executable or consumed"
+  },
+  {
+    "path": "legacy/unverified/dev_notebook.py.gz",
+    "line": 3076,
+    "terms": [
+      "fdr_q"
+    ],
+    "classification": "historical unverified artifact; quarantined, not executable or consumed"
+  },
+  {
+    "path": "legacy/unverified/dev_notebook.py.gz",
+    "line": 3079,
+    "terms": [
+      "fdr_q"
+    ],
+    "classification": "historical unverified artifact; quarantined, not executable or consumed"
+  },
+  {
+    "path": "legacy/unverified/dev_notebook.py.gz",
+    "line": 3089,
+    "terms": [
+      "fdr_q"
+    ],
+    "classification": "historical unverified artifact; quarantined, not executable or consumed"
+  },
+  {
+    "path": "legacy/unverified/dev_notebook.py.gz",
+    "line": 3093,
+    "terms": [
+      "fdr_q"
+    ],
+    "classification": "historical unverified artifact; quarantined, not executable or consumed"
+  },
+  {
+    "path": "legacy/unverified/dev_notebook.py.gz",
+    "line": 3251,
+    "terms": [
+      "Independently Verified",
+      "independently verified"
+    ],
+    "classification": "historical unverified artifact; quarantined, not executable or consumed"
+  },
+  {
+    "path": "legacy/unverified/dev_notebook.py.gz",
+    "line": 3260,
+    "terms": [
+      "Leak-Free",
+      "leak-free"
+    ],
+    "classification": "historical unverified artifact; quarantined, not executable or consumed"
+  },
+  {
+    "path": "legacy/unverified/dev_notebook.py.gz",
+    "line": 3263,
+    "terms": [
+      "Leak-Free",
+      "leak-free"
+    ],
+    "classification": "historical unverified artifact; quarantined, not executable or consumed"
+  },
+  {
+    "path": "legacy/unverified/dev_notebook.py.gz",
+    "line": 3277,
+    "terms": [
+      "replicated"
+    ],
+    "classification": "historical unverified artifact; quarantined, not executable or consumed"
+  },
+  {
+    "path": "legacy/unverified/dev_notebook.py.gz",
+    "line": 3349,
+    "terms": [
+      "se_slopes",
+      "np.sqrt(8.0)"
+    ],
+    "classification": "historical unverified artifact; quarantined, not executable or consumed"
+  },
+  {
+    "path": "legacy/unverified/dev_notebook.py.gz",
+    "line": 3350,
+    "terms": [
+      "se_slopes"
+    ],
+    "classification": "historical unverified artifact; quarantined, not executable or consumed"
+  },
+  {
+    "path": "legacy/unverified/dev_notebook.py.gz",
+    "line": 3351,
+    "terms": [
+      "norm.cdf",
+      "p_value"
+    ],
+    "classification": "historical unverified artifact; quarantined, not executable or consumed"
+  },
+  {
+    "path": "legacy/unverified/dev_notebook.py.gz",
+    "line": 3352,
+    "terms": [
+      "false_discovery_control",
+      "p_value"
+    ],
+    "classification": "historical unverified artifact; quarantined, not executable or consumed"
+  },
+  {
+    "path": "legacy/unverified/dev_notebook.py.gz",
+    "line": 3361,
+    "terms": [
+      "p_value"
+    ],
+    "classification": "historical unverified artifact; quarantined, not executable or consumed"
+  },
+  {
+    "path": "legacy/unverified/dev_notebook.py.gz",
+    "line": 3362,
+    "terms": [
+      "fdr_q"
+    ],
+    "classification": "historical unverified artifact; quarantined, not executable or consumed"
+  },
+  {
+    "path": "legacy/unverified/dev_notebook.py.gz",
+    "line": 3363,
+    "terms": [
+      "se_slopes"
+    ],
+    "classification": "historical unverified artifact; quarantined, not executable or consumed"
+  },
+  {
+    "path": "legacy/unverified/dev_notebook.py.gz",
+    "line": 3390,
+    "terms": [
+      "p_value"
+    ],
+    "classification": "historical unverified artifact; quarantined, not executable or consumed"
+  },
+  {
+    "path": "legacy/unverified/dev_notebook.py.gz",
+    "line": 3391,
+    "terms": [
+      "fdr_q"
+    ],
+    "classification": "historical unverified artifact; quarantined, not executable or consumed"
+  },
+  {
+    "path": "legacy/unverified/dev_notebook.py.gz",
+    "line": 3393,
+    "terms": [
+      "Evidence Tier"
+    ],
+    "classification": "historical unverified artifact; quarantined, not executable or consumed"
+  },
+  {
+    "path": "legacy/unverified/dev_notebook.py.gz",
+    "line": 3403,
+    "terms": [
+      "0.095",
+      "0.108",
+      "0.185"
+    ],
+    "classification": "historical unverified artifact; quarantined, not executable or consumed"
+  },
+  {
+    "path": "legacy/unverified/dev_notebook.py.gz",
+    "line": 3466,
+    "terms": [
+      "Leak-Free",
+      "leak-free"
+    ],
+    "classification": "historical unverified artifact; quarantined, not executable or consumed"
+  },
+  {
+    "path": "legacy/unverified/dev_notebook.py.gz",
+    "line": 3530,
+    "terms": [
+      "Publication-Quality",
+      "publication-quality"
+    ],
+    "classification": "historical unverified artifact; quarantined, not executable or consumed"
+  },
+  {
+    "path": "legacy/unverified/dev_notebook.py.gz",
+    "line": 3538,
+    "terms": [
+      "95% Confidence Interval"
+    ],
+    "classification": "historical unverified artifact; quarantined, not executable or consumed"
+  },
+  {
+    "path": "legacy/unverified/dev_notebook.py.gz",
+    "line": 3544,
+    "terms": [
+      "Leak-Free",
+      "leak-free"
+    ],
+    "classification": "historical unverified artifact; quarantined, not executable or consumed"
+  },
+  {
+    "path": "legacy/unverified/dev_notebook.py.gz",
+    "line": 3558,
+    "terms": [
+      "Publication-Quality",
+      "publication-quality"
+    ],
+    "classification": "historical unverified artifact; quarantined, not executable or consumed"
+  },
+  {
+    "path": "legacy/unverified/dev_notebook.py.gz",
+    "line": 3577,
+    "terms": [
+      "replicated",
+      "high concordance"
+    ],
+    "classification": "historical unverified artifact; quarantined, not executable or consumed"
+  },
+  {
+    "path": "legacy/unverified/dev_notebook.py.gz",
+    "line": 3578,
+    "terms": [
+      "replicated",
+      "high concordance"
+    ],
+    "classification": "historical unverified artifact; quarantined, not executable or consumed"
+  },
+  {
+    "path": "legacy/unverified/dev_notebook.py.gz",
+    "line": 3579,
+    "terms": [
+      "replicated",
+      "confirmed"
+    ],
+    "classification": "historical unverified artifact; quarantined, not executable or consumed"
+  },
+  {
+    "path": "legacy/unverified/dev_notebook.py.gz",
+    "line": 3580,
+    "terms": [
+      "replicated"
+    ],
+    "classification": "historical unverified artifact; quarantined, not executable or consumed"
+  },
+  {
+    "path": "legacy/unverified/dev_notebook.py.gz",
+    "line": 3581,
+    "terms": [
+      "replicated"
+    ],
+    "classification": "historical unverified artifact; quarantined, not executable or consumed"
+  },
+  {
+    "path": "legacy/unverified/dev_notebook.py.gz",
+    "line": 3584,
+    "terms": [
+      "replicated"
+    ],
+    "classification": "historical unverified artifact; quarantined, not executable or consumed"
+  },
+  {
+    "path": "legacy/unverified/dev_notebook.py.gz",
+    "line": 3685,
+    "terms": [
+      "5,572"
+    ],
+    "classification": "historical unverified artifact; quarantined, not executable or consumed"
+  },
+  {
+    "path": "legacy/unverified/dev_notebook.py.gz",
+    "line": 3687,
+    "terms": [
+      "0.60",
+      "0.39",
+      "10\u207b\u00b2\u2076\u2078"
+    ],
+    "classification": "historical unverified artifact; quarantined, not executable or consumed"
+  },
+  {
+    "path": "legacy/unverified/dev_notebook.py.gz",
+    "line": 3708,
+    "terms": [
+      "replicated"
+    ],
+    "classification": "historical unverified artifact; quarantined, not executable or consumed"
+  }
+]

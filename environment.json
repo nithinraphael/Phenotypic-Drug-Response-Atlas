@@ -1,0 +1,24 @@
+{
+  "software_versions": {
+    "python": "3.13.15",
+    "marimo": "0.25.2",
+    "polars": "2.0.0",
+    "numpy": "2.5.4",
+    "scipy": "1.18.1",
+    "thunor": "1.0.3",
+    "tabpfn": "9.2.0",
+    "torch": "2.14.1",
+    "torchvision": "0.29.1",
+    "umap-learn": "0.5.12",
+    "plotly": "7.1.0",
+    "expression": "5.7.0",
+    "tifffile": "2026.10.15",
+    "scikit-learn": "1.9.1",
+    "piecewise-regression": "1.5.0",
+    "pillow": "13.0.0",
+    "kaleido": "1.5.0",
+    "pyreadr": "0.5.8"
+  },
+  "cuda_available": false,
+  "gpu_name": null
+}

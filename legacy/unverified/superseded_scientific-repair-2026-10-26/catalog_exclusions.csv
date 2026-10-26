@@ -1,0 +1,6 @@
+reason,excluded,remaining
+missing identifiers,10812,690192
+invalid fitted parameters,0,690192
+nonpositive EC50,0,690192
+R² below 0.75 or above 1,632384,57808
+"absolute slope not in (1, 20]",6045,51763

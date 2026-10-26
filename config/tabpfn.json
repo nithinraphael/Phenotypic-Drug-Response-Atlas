@@ -1,0 +1,14 @@
+{
+  "model_family": "TabPFN",
+  "model_version": "v2",
+  "package_version": "9.2.0",
+  "checkpoint_path": "/home/ronaldo/.cache/tabpfn/tabpfn-v2-regressor.ckpt",
+  "checkpoint_sha256": "2ab5a07d5c41dfe6db9aa7ae106fc6de898326c2765be66505a07e2868c10736",
+  "device": "cpu",
+  "precision": "auto",
+  "feature_definition": "log10_dose",
+  "random_seed": 42,
+  "source_url": "https://huggingface.co/Prior-Labs/TabPFN-v2-reg/blob/230d61748baee2db4beb5cf5b99c7cd3a9b71df0/tabpfn-v2-regressor.ckpt",
+  "source_checked_at": "2026-10-26",
+  "checkpoint_repository_revision": "230d61748baee2db4beb5cf5b99c7cd3a9b71df0"
+}

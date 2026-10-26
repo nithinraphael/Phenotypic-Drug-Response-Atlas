@@ -1,0 +1,98 @@
+[
+  {
+    "path": "data/bbbc021/compounds.csv",
+    "bytes": 8179,
+    "sha256": "e4b6868ea77eb1cef67cfe75dd792a2074ffde609c79d69c42deec131b1b88ec",
+    "status": "local source file; acquisition date unknown"
+  },
+  {
+    "path": "data/bbbc021/embeddings_cache.npz",
+    "bytes": 425996,
+    "sha256": "ab4369bf6e586954688f221a597a4de2ea5ab59a41e3fa94a4ff04e486e93312",
+    "status": "legacy cache; unverified and not consumed"
+  },
+  {
+    "path": "data/bbbc021/mechanisms.csv",
+    "bytes": 4404,
+    "sha256": "cddb6c6b72c043fd25f3a41d84624d4817927a1d76fe87dc829674181dd62719",
+    "status": "local source file; acquisition date unknown"
+  },
+  {
+    "path": "data/bbbc021/metadata.csv",
+    "bytes": 3965784,
+    "sha256": "7fd8a9363970548736a03eba3e14bd2b737c967f0e0fdf436bc91004676f50e7",
+    "status": "local source file; acquisition date unknown"
+  },
+  {
+    "path": "data/bbbc021/plate.zip",
+    "bytes": 839436312,
+    "sha256": "9e8607c2b8a4d57b75a2fae29cc5a7eff5bd1ca32d95fdf1b5b01e7b620592d3",
+    "status": "local source file; acquisition date unknown"
+  },
+  {
+    "path": "data/bbbc021/umap_cache.npz",
+    "bytes": 10462,
+    "sha256": "d400072599d519cdf603fef38b6367c7b7c40445dc9db61604af9bf2b05057da",
+    "status": "legacy cache; unverified and not consumed"
+  },
+  {
+    "path": "data/ctrp/ctrp_matched_responses.csv",
+    "bytes": 2533919,
+    "sha256": "caaa4af92d2ec61c9280b3ec77dfa36da62deddc08b5f630079910338ba56227",
+    "status": "external source candidate; origin/version/mappings unverified; excluded from comparisons"
+  },
+  {
+    "path": "data/ctrp/sample_info.tsv",
+    "bytes": 4590972,
+    "sha256": "e01feeb3752af8339222ca978fad048b889ddc32b939ba5f52ebb47a47eef3e1",
+    "status": "external source candidate; origin/version/mappings unverified; excluded from comparisons"
+  },
+  {
+    "path": "data/gdsc/GDSC2_fitted_dose_response.csv",
+    "bytes": 20355833,
+    "sha256": "0883b3ef6e440603094c43c74044e1d333fce61e92e3efa374ea3a54f0b50302",
+    "status": "external source candidate; origin/version/mappings unverified; excluded from comparisons"
+  },
+  {
+    "path": "data/prism/cell_lines.csv",
+    "bytes": 40979,
+    "sha256": "b93436b5f4bcf5fd14589697be4ca8f99ffd99d639223080380bc514c3718d27",
+    "status": "local source file; acquisition date unknown"
+  },
+  {
+    "path": "data/prism/curves.csv",
+    "bytes": 264340589,
+    "sha256": "88d1013506e0cd6f191a51c5f3fdd3fb2be54f8afb4e19a5d1f8538e81fbfec8",
+    "status": "local source file; acquisition date unknown"
+  },
+  {
+    "path": "data/prism/pooling.csv",
+    "bytes": 264680,
+    "sha256": "73c4aa555eef63b277a3badbc7ea4dcba05c9c12e2190e373c5a1fda322377f1",
+    "status": "local source file; acquisition date unknown"
+  },
+  {
+    "path": "data/prism/ranked_catalog_cache.parquet",
+    "bytes": 6546,
+    "sha256": "14151100a280a38967ea0f0d087bf3080ff89519aec6273e586d35136cee9cb2",
+    "status": "legacy cache; unverified and not consumed"
+  },
+  {
+    "path": "data/prism/responses.csv",
+    "bytes": 237567060,
+    "sha256": "59fab6f8126cfc57d84a59e11cb67add1c7850da72cc3df6f4f9d6ef0c1808e7",
+    "status": "local source file; acquisition date unknown"
+  },
+  {
+    "path": "data/prism/summary_cache.parquet",
+    "bytes": 2179,
+    "sha256": "43cdf99f47895914440b2a8b6c6dfc261fa28f17bd1c1b99b0e5c828f8a11b36",
+    "status": "legacy cache; unverified and not consumed"
+  },
+  {
+    "path": "data/prism/treatments.csv",
+    "bytes": 15690740,
+    "sha256": "84c0043e3cdbd37a4f9b66fb62900053b5ac695f4edb6bd0a0c9d4b6168918d6",
+    "status": "local source file; acquisition date unknown"
+  }
+]

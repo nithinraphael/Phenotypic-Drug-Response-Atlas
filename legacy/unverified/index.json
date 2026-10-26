@@ -1,0 +1,110 @@
+[
+  {
+    "original": "dev_notebook.py",
+    "archive": "legacy/unverified/dev_notebook.py.gz",
+    "sha256": "fe310c6bd38acee48ca05e7e2412e7bcafcb089329d2a4bf41703d412f8e7bc2",
+    "status": "unverified historical artifact; excluded from application"
+  },
+  {
+    "original": "RESEARCH_REPORT.md",
+    "archive": "legacy/unverified/RESEARCH_REPORT.md.gz",
+    "sha256": "54687f27a8d17dc070d57b0315cb04d74df27b348625e940673af4d45ff51e85",
+    "status": "unverified historical artifact; excluded from application"
+  },
+  {
+    "original": "reports/model_benchmark.csv",
+    "archive": "legacy/unverified/reports__model_benchmark.csv.gz",
+    "sha256": "89edd1c28e916dd2524f88ac6e580db1254c9a30502241f6e26f553621889f22",
+    "status": "unverified historical artifact; excluded from application"
+  },
+  {
+    "original": "reports/RESEARCH_REPORT.md",
+    "archive": "legacy/unverified/reports__RESEARCH_REPORT.md.gz",
+    "sha256": "54687f27a8d17dc070d57b0315cb04d74df27b348625e940673af4d45ff51e85",
+    "status": "unverified historical artifact; excluded from application"
+  },
+  {
+    "original": "reports/top10_discoveries.csv",
+    "archive": "legacy/unverified/reports__top10_discoveries.csv.gz",
+    "sha256": "3ab475830902f5b38dd1fba306851010208c34fdf90dd0ff86d1f50d3616a04e",
+    "status": "unverified historical artifact; excluded from application"
+  },
+  {
+    "original": "reports/floxuridine_vs_bortezomib_audit.csv",
+    "archive": "legacy/unverified/reports__floxuridine_vs_bortezomib_audit.csv.gz",
+    "sha256": "f234a9b7ba13b600abf2bd4399539f750013dcdedc82d483015499f07a82ae0d",
+    "status": "unverified historical artifact; excluded from application"
+  },
+  {
+    "original": "reports/independent_validation_summary.csv",
+    "archive": "legacy/unverified/reports__independent_validation_summary.csv.gz",
+    "sha256": "d7a1af642a473643d1eef2a0798d7c721bf2743482308f5213c8110d5a5e6591",
+    "status": "unverified historical artifact; excluded from application"
+  },
+  {
+    "original": "figures/fig3_umap_morphology.png",
+    "archive": "legacy/unverified/figures__fig3_umap_morphology.png.gz",
+    "sha256": "44d41a3fa5bcadbfb4a6f812843d0fba449bfc1e51bc17e20a1ff15ad3224888",
+    "status": "unverified historical artifact; excluded from application"
+  },
+  {
+    "original": "figures/fig2_model_benchmark.png",
+    "archive": "legacy/unverified/figures__fig2_model_benchmark.png.gz",
+    "sha256": "443e96025883412f14b33f35d4d483671b39ee94da704102ff223c68ef36700e",
+    "status": "unverified historical artifact; excluded from application"
+  },
+  {
+    "original": "figures/fig3_umap_morphology.svg",
+    "archive": "legacy/unverified/figures__fig3_umap_morphology.svg.gz",
+    "sha256": "a6729fbf9578e50cbc808a1e34361f5f9ed9b6efec61633d8e39dea7e493a058",
+    "status": "unverified historical artifact; excluded from application"
+  },
+  {
+    "original": "figures/fig4_floxuridine_vs_bortezomib.png",
+    "archive": "legacy/unverified/figures__fig4_floxuridine_vs_bortezomib.png.gz",
+    "sha256": "8ac16cdccd2e23ac4811d3b834a9179fab178ba8ca5e34b9f24abbd38ad1cab7",
+    "status": "unverified historical artifact; excluded from application"
+  },
+  {
+    "original": "figures/fig4_floxuridine_vs_bortezomib.svg",
+    "archive": "legacy/unverified/figures__fig4_floxuridine_vs_bortezomib.svg.gz",
+    "sha256": "923636ec6175d8dfcda12fd23b21f1f5241b288e59ddacad2e92cfdb87b3f244",
+    "status": "unverified historical artifact; excluded from application"
+  },
+  {
+    "original": "figures/fig2_model_benchmark.svg",
+    "archive": "legacy/unverified/figures__fig2_model_benchmark.svg.gz",
+    "sha256": "8292bdf2cd928bae370471d9ad676988fa5d9f1584981b66cecb0c1d4965f1a4",
+    "status": "unverified historical artifact; excluded from application"
+  },
+  {
+    "original": "figures/fig1_dose_response.png",
+    "archive": "legacy/unverified/figures__fig1_dose_response.png.gz",
+    "sha256": "067de1c65756d052e089286227ba8c461014dc4936f4a92dae2a3261237bd47b",
+    "status": "unverified historical artifact; excluded from application"
+  },
+  {
+    "original": "figures/fig5_cross_dataset_validation.svg",
+    "archive": "legacy/unverified/figures__fig5_cross_dataset_validation.svg.gz",
+    "sha256": "cdb83e8f34ec6253609412892e450e8ccb81efa0332b0f2282ab0d285307adbf",
+    "status": "unverified historical artifact; excluded from application"
+  },
+  {
+    "original": "figures/fig1_dose_response.svg",
+    "archive": "legacy/unverified/figures__fig1_dose_response.svg.gz",
+    "sha256": "fe8c7626b6fbad01d4b6e646cc637d2d6c3db2e6795eb7c8dc4f761738234ccf",
+    "status": "unverified historical artifact; excluded from application"
+  },
+  {
+    "original": "figures/fig5_cross_dataset_validation.png",
+    "archive": "legacy/unverified/figures__fig5_cross_dataset_validation.png.gz",
+    "sha256": "6f2cd1b79de7fd531b7ef533dd11f87a4f3af7476065c011547e94682fb333f1",
+    "status": "unverified historical artifact; excluded from application"
+  },
+  {
+    "original": "__marimo__/session/notebook.py.json",
+    "archive": "legacy/unverified/session_notebook.py.json.gz",
+    "sha256": "256712b5eec926f51a00b0f51f970863b1c1d667839b42a73d177526f1c360e9",
+    "status": "stale UI session; excluded from application"
+  }
+]

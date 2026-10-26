@@ -1,0 +1,21 @@
+[
+  {
+    "path": "/home/ronaldo/.cache/tabpfn/tabpfn-v2-regressor.ckpt",
+    "bytes": 44390977,
+    "sha256": "2ab5a07d5c41dfe6db9aa7ae106fc6de898326c2765be66505a07e2868c10736",
+    "status": "SHA-256 matches publisher TabPFN-v2-reg record; configured explicitly as v2 CPU",
+    "source_url": "https://huggingface.co/Prior-Labs/TabPFN-v2-reg/blob/main/tabpfn-v2-regressor.ckpt"
+  },
+  {
+    "path": "/home/ronaldo/.cache/torch/hub/checkpoints/dino_deitsmall8_pretrain.pth",
+    "bytes": 86728949,
+    "sha256": "55c8b267f479b614ec20858947ce361ba804846c193e20be74263a096bb6d75e",
+    "status": "present cached weights; authoritative identity not yet authenticated, no automatic use"
+  },
+  {
+    "path": "/home/ronaldo/.cache/torch/hub/checkpoints/dinov2_vits14_pretrain.pth",
+    "bytes": 88283115,
+    "sha256": "b938bf1bc15cd2ec0feacfe3a1bb553fe8ea9ca46a7e1d8d00217f29aef60cd9",
+    "status": "present cached weights; authoritative identity not yet authenticated, no automatic use"
+  }
+]

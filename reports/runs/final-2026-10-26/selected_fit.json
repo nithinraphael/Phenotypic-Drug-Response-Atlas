@@ -1,0 +1,26 @@
+{
+  "status": "ok",
+  "reason": null,
+  "ec50": 0.030096263440539114,
+  "hill_slope": 18.083715192714195,
+  "lower_asymptote": 0.016863602856245927,
+  "upper_asymptote": 1.3036762659382957,
+  "r2": 0.965740310033575,
+  "rmse": 0.11967789953190304,
+  "ec20": 0.02787530594526128,
+  "ec80": 0.03249417512622178,
+  "diagnostics": {
+    "n_observations": 7,
+    "n_concentrations": 7,
+    "min_dose_um": 0.00061034,
+    "max_dose_um": 10.0,
+    "flags": [
+      "Transition sampled by fewer than two concentrations",
+      "Ill-conditioned parameter Jacobian"
+    ],
+    "parameter_bounds": "LL4 unbounded; EC50 log parameterization; no imposed slope bound",
+    "jacobian_condition": 948223798.2261393,
+    "perturbation_stability": "Not evaluated"
+  },
+  "tabpfn_status": "ok"
+}

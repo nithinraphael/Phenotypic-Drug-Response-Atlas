@@ -1,6 +1,5 @@
-def main():
-    print("Hello from btp!")
+from notebook import app
 
 
-if __name__ == "__main__":
-    main()
+if __name__ == '__main__':
+    app.run()
