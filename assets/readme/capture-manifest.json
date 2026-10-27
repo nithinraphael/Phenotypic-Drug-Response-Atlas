@@ -1,0 +1,157 @@
+{
+  "created_at": "2026-10-27T13:38:46.138382+00:00",
+  "application_url": "https://curriculum-consequence-economics-amanda.trycloudflare.com/",
+  "tool": "agent-browser 0.39.4 / Chromium",
+  "viewport": [
+    1600,
+    1100
+  ],
+  "application_code_modified": false,
+  "mobile_validation": false,
+  "files": [
+    {
+      "file": "architecture.png",
+      "kind": "diagram rasterization",
+      "dimensions": [
+        1920,
+        1200
+      ],
+      "condition": "Implemented analytical relationships; no experimental values invented",
+      "sha256": "3e64f0c5ed5cf23acafa50b45328fdbcd2d66a138de7bbefd0df40881f9ad5df",
+      "captured_at": "2026-10-27T13:38:19.501649+00:00"
+    },
+    {
+      "file": "cell-atlas.png",
+      "kind": "actual live desktop screenshot",
+      "dimensions": [
+        1600,
+        1100
+      ],
+      "condition": "5857 retained objects; cytochalasin B 30 uM highlighted; generic DINO shared UMAP",
+      "sha256": "6d46a3cb5ceff233ed26b596c7064e8d55c0b25007a494e2eb7b5ecd7397e2e3",
+      "captured_at": "2026-10-27T13:34:28.414675+00:00"
+    },
+    {
+      "file": "cell-microscopy.png",
+      "kind": "actual live desktop screenshot",
+      "dimensions": [
+        1600,
+        1100
+      ],
+      "condition": "Cytochalasin B 30 uM, well B03 field 5, object 28; actual predicted boundaries and raw-crop view",
+      "sha256": "a0e9af2305dc20b294c1bb0149e7f95229c62415167888c719400b6f073b3f58",
+      "captured_at": "2026-10-27T13:26:44.677728+00:00"
+    },
+    {
+      "file": "discoveries.png",
+      "kind": "actual live desktop screenshot",
+      "dimensions": [
+        1600,
+        1100
+      ],
+      "condition": "PRISM top-100 source fits; no synthetic points",
+      "sha256": "d1d13be5e2ed31d875ee6f9cd6205c57ac7e67cf8f1f2a3f1c127c4f7af99370",
+      "captured_at": "2026-10-27T13:24:42.649742+00:00"
+    },
+    {
+      "file": "dose-morphology.png",
+      "kind": "actual live desktop screenshot",
+      "dimensions": [
+        1600,
+        1100
+      ],
+      "condition": "Cytochalasin B; largest adjacent profile difference 3 to 10 uM",
+      "sha256": "46a3a205dbcd13352cdd221792e66302d6ce6d2e0d829ab6ccef9c6b8c918a7a",
+      "captured_at": "2026-10-27T13:26:45.291728+00:00"
+    },
+    {
+      "file": "drug-explorer.png",
+      "kind": "actual live desktop screenshot",
+      "dimensions": [
+        1600,
+        1100
+      ],
+      "condition": "Bortezomib BRD-K88510285-001-11-1 / RKO ACH-000943 / HTS002; live TabPFN v2; concentration cursor 0.625 uM",
+      "sha256": "a76f55d501eb89aef3ce41d9c75b9b2618a511389a119ed100607752c0c16938",
+      "captured_at": "2026-10-27T13:33:17.195683+00:00"
+    },
+    {
+      "file": "evaluation.png",
+      "kind": "diagram rasterization",
+      "dimensions": [
+        1920,
+        1200
+      ],
+      "condition": "Implemented analytical relationships; no experimental values invented",
+      "sha256": "b893611793ca72ccb09bd4b833f24870f8fafc9991b762260a611461cebe0f4d",
+      "captured_at": "2026-10-27T13:38:19.248649+00:00"
+    },
+    {
+      "file": "external-evidence.png",
+      "kind": "actual live desktop screenshot",
+      "dimensions": [
+        1600,
+        1100
+      ],
+      "condition": "Hydrated GDSC2/CTRP source inventory and explicit quantitative-comparison blocker",
+      "sha256": "c27ffcc34e88ee8d55f101a6496393217e9170014562ff1bfc973af571bf9aa7",
+      "captured_at": "2026-10-27T13:37:47.087652+00:00"
+    },
+    {
+      "file": "image-field-map.png",
+      "kind": "actual live desktop screenshot",
+      "dimensions": [
+        1600,
+        1100
+      ],
+      "condition": "240-field generic DINO projection; cytochalasin B condition",
+      "sha256": "014c85b891efaf568993a0303d11483849ca70e7249182a08e0713f8a64308eb",
+      "captured_at": "2026-10-27T13:35:04.958671+00:00"
+    },
+    {
+      "file": "microscopy-comparison.png",
+      "kind": "actual live desktop screenshot",
+      "dimensions": [
+        1600,
+        1100
+      ],
+      "condition": "DMSO well B02 field 1 and cytochalasin B 30 uM well B03 field 5",
+      "sha256": "4e3f103765076f08d0e0a10265ab3f5bf043a57ab54e5295c14beadcb0453be8",
+      "captured_at": "2026-10-27T13:27:00.827726+00:00"
+    },
+    {
+      "file": "validation.png",
+      "kind": "actual live desktop screenshot",
+      "dimensions": [
+        1600,
+        1100
+      ],
+      "condition": "Recorded bortezomib/RKO/HTS002 held-out benchmark; 2 common observations",
+      "sha256": "8b4d7867c9777ae6c1795fefec195118c423b26049acb465230b19fbdda27b85",
+      "captured_at": "2026-10-27T13:27:41.772722+00:00"
+    }
+  ],
+  "checks": [
+    "All four tabs inspected",
+    "Candidate row selection, table pagination, shortlist download and interpretation disclosure",
+    "Compound and cell-line search; screen and cursor controls inspected",
+    "Actual TabPFN request; 120 finite exported predictions from 7 observations",
+    "Zoom/reset and tab navigation",
+    "Cell compound/dose/field selectors; searchable cell selection; four color options",
+    "Native cell-map mouse click resolved to source object 26 in well B03",
+    "Raw uint16 crop, well-summary and 240-field coordinate exports",
+    "Image-field disclosure with DMSO control and map color controls",
+    "Recorded benchmark failure/coverage table; evaluation button invoked",
+    "External inventory, methods download and scope disclosures",
+    "Fresh local source counts and filter exclusions; saved benchmark metrics reconciled",
+    "Cell-atlas and benchmark manifests verified",
+    "HTML accessible-SVG checks, Mermaid parser checks, SVG XML checks, visual desktop inspection",
+    "README local link and code-fence checks"
+  ],
+  "limitations": [
+    "Representative interaction coverage, not every drug/cell/dose combination",
+    "Existing 83-test suite was not rerun during documentation-only work",
+    "No new segmentation run or independent biological validation",
+    "No mobile inspection"
+  ]
+}

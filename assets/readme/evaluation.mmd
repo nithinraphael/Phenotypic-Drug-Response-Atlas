@@ -1,0 +1,8 @@
+flowchart LR
+    O["Measured observations: one compound, cell, screen"] --> G["Group unique concentrations"]
+    G --> S["Partition each fold; seed 42"]
+    S --> F["Fit eligible models on training observations only"]
+    S --> H["Hold out test doses and outcomes"]
+    F --> P["Predict test concentrations; retain failures"]
+    P --> R["Aggregate error and coverage"]
+    H --> R

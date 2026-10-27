@@ -1,0 +1,8 @@
+flowchart LR
+    P["PRISM viability and source fits"] --> V["Screening, LL4, TabPFN and evaluation"]
+    B["BBBC021 images and metadata"] --> M["Pretrained masks, DINO and UMAP"]
+    E["GDSC2 and local CTRP records"] --> I["Source inventory; comparisons blocked"]
+    V --> A["Public marimo atlas"]
+    M --> A
+    I --> A
+    A --> O["Tables, figures and provenance exports"]

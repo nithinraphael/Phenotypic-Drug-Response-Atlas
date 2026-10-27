@@ -1,0 +1,117 @@
+{
+  "checked_at": "2026-10-27",
+  "counts": {
+    "raw_curve_records": 701004,
+    "compound_ids": 1502,
+    "cell_line_ids": 480,
+    "compound_cell_pairs": 644798,
+    "compound_cell_screen_records": 690192,
+    "compound_display_names": 1448,
+    "curve_rows_missing_cell_identifier": 10812,
+    "response_rows": 489,
+    "response_columns": 39925,
+    "observed_response_values": 14527780,
+    "unmapped_response_columns": 0,
+    "duplicate_treatment_ids": 0
+  },
+  "eligible_source_fits": 51763,
+  "filter_audit": [
+    {
+      "reason": "missing identifiers",
+      "excluded": 10812,
+      "remaining": 690192
+    },
+    {
+      "reason": "invalid fitted parameters",
+      "excluded": 0,
+      "remaining": 690192
+    },
+    {
+      "reason": "nonpositive EC50",
+      "excluded": 0,
+      "remaining": 690192
+    },
+    {
+      "reason": "R\u00b2 below 0.75 or above 1",
+      "excluded": 632384,
+      "remaining": 57808
+    },
+    {
+      "reason": "absolute slope not in (1, 20]",
+      "excluded": 6045,
+      "remaining": 51763
+    }
+  ],
+  "benchmark_status": "verified",
+  "benchmark": [
+    {
+      "model": "Hill LL4",
+      "model_version": "1.0.3",
+      "package_version": "1.0.3",
+      "checkpoint_sha256": null,
+      "curves": 1,
+      "folds": 3,
+      "held_out_observations": 7,
+      "successful_predictions": 4,
+      "failed_predictions": 3,
+      "failed_folds": 1,
+      "rmse": 0.6628688864874666,
+      "common_observations": 2,
+      "common_rmse": 0.2558130312146998
+    },
+    {
+      "model": "Mean baseline",
+      "model_version": "2.5.4",
+      "package_version": "2.5.4",
+      "checkpoint_sha256": null,
+      "curves": 1,
+      "folds": 3,
+      "held_out_observations": 7,
+      "successful_predictions": 7,
+      "failed_predictions": 0,
+      "failed_folds": 0,
+      "rmse": 0.7462652469347336,
+      "common_observations": 2,
+      "common_rmse": 0.8168007053011241
+    },
+    {
+      "model": "Segmented",
+      "model_version": "1.5.0",
+      "package_version": "1.5.0",
+      "checkpoint_sha256": null,
+      "curves": 1,
+      "folds": 3,
+      "held_out_observations": 7,
+      "successful_predictions": 2,
+      "failed_predictions": 5,
+      "failed_folds": 2,
+      "rmse": 0.7142701187351982,
+      "common_observations": 2,
+      "common_rmse": 0.7142701187351982
+    },
+    {
+      "model": "TabPFN",
+      "model_version": "v2",
+      "package_version": "9.2.0",
+      "checkpoint_sha256": "2ab5a07d5c41dfe6db9aa7ae106fc6de898326c2765be66505a07e2868c10736",
+      "curves": 1,
+      "folds": 3,
+      "held_out_observations": 7,
+      "successful_predictions": 7,
+      "failed_predictions": 0,
+      "failed_folds": 0,
+      "rmse": 0.5569626029571895,
+      "common_observations": 2,
+      "common_rmse": 0.7267350087446975
+    }
+  ],
+  "single_cell_status": "verified",
+  "single_cell_counts": {
+    "cells": 5857,
+    "fields": 60,
+    "available_fields": 240,
+    "runtime_seconds": 2859.104672197951,
+    "peak_rss_bytes": 2656059392,
+    "peak_gpu_allocated_bytes": 2472572416
+  }
+}
