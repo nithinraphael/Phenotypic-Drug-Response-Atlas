@@ -176,7 +176,7 @@ Checkpoint/source hashes live in [TabPFN configuration](config/tabpfn.json), [DI
 
 ### Held-out concentration benchmark
 
-The public recorded run is [step18-1-2026-10-26](reports/runs/step18-1-2026-10-26/): bortezomib `BRD-K88510285-001-11-1`, RKO `ACH-000943`, screen `HTS002`; **one curve, three folds, seven held-out observations**. Metrics were recomputed from saved prediction rows during this documentation audit. Stored model inference was not rerun for this reconciliation.
+The public recorded run is [step18-1-2026-10-26](reports/runs/step18-1-2026-10-26/): bortezomib `BRD-K88510285-001-11-1`, RKO `ACH-000943`, screen `HTS002`; **one curve, three folds, seven held-out observations**. Metrics were recomputed from saved prediction rows on 2026-10-27 without rerunning stored model inference.
 
 | Model | Successful / attempted predictions | Failed folds / 3 | RMSE on own successes | RMSE on common observations |
 | --- | ---: | ---: | ---: | ---: |
@@ -189,7 +189,7 @@ Primary RMSE pools successful held-out observations, so model-specific columns c
 
 ### Cell-object atlas
 
-The completed [Step 19 run](STEP19_RESULTS.md) contains **8,647 predicted objects**, **5,857 retained** and **2,790 excluded**, across 60 sampled fields. Boundary counts (2,143) and lack-of-nuclear-support counts (1,171) overlap. The integrity audit compared **180 crops** against original pixels and recalculated population summaries; **258 retained masks (4.40%)** contain disconnected regions. This count is not a segmentation-accuracy estimate.
+The completed [single-cell atlas run](STEP19_RESULTS.md) contains **8,647 predicted objects**, **5,857 retained** and **2,790 excluded**, across 60 sampled fields. Boundary counts (2,143) and lack-of-nuclear-support counts (1,171) overlap. The integrity audit compared **180 crops** against original pixels and recalculated population summaries; **258 retained masks (4.40%)** contain disconnected regions. This count is not a segmentation-accuracy estimate.
 
 On the available **GTX 1650, 4 GB**, pretrained atlas inference took **2,859.10 seconds (47.65 minutes)**, with peak process RSS **2.47 GiB** and peak GPU allocation **2.30 GiB**. GPU allocation excludes driver/other-process memory. A separate real 256×256 CPU smoke test produced 20 cell and 23 nuclear objects in 48.80 seconds with 3.08 GiB peak process RSS; this is not a whole-plate CPU benchmark.
 
@@ -292,7 +292,7 @@ marimo caches separate source loading, selected-condition fitting/prediction, fi
 
 ## Verification
 
-The recorded Step 19 execution passed **83 automated tests**, **12 desktop browser interaction groups**, all 16 default marimo checks across the three notebooks, complete public-notebook execution and the real-data cell-atlas integrity audit. Those are recorded execution results, not a new complete suite run during this README-only change. Tests cover fitting edge cases, duplicate/cardinality checks, category boundaries, concentration leakage, failures, metric reconciliation, shuffled embedding IDs, corrupt caches, raw-channel exports and reactive selections.
+The [single-cell atlas verification recorded on 2026-10-26](TEST_RESULTS.md#step-19-final-execution-2026-10-26) passed **83 automated tests**, **12 desktop browser interaction groups**, all 16 default marimo checks across the three notebooks, complete public-notebook execution and the real-data cell-atlas integrity audit. These results describe the recorded execution; the complete suite was not rerun for the browser-based verification on 2026-10-27. Tests cover fitting edge cases, duplicate/cardinality checks, category boundaries, concentration leakage, failures, metric reconciliation, shuffled embedding IDs, corrupt caches, raw-channel exports and reactive selections.
 
 ```sh
 uv run python -m unittest discover -s tests -v
@@ -302,7 +302,7 @@ uv run python notebook.py
 uv run python tests/validate_cell_atlas.py
 ```
 
-The real-data application/atlas tests require the local datasets and verified artifacts. Synthetic fixtures are confined to tests. This documentation audit freshly checked source counts, cache manifests, saved benchmark reconciliation, all four live tabs, model prediction, microscopy controls, disclosures and representative exports using agent-browser. Screenshots were captured from the supplied public URL on 2026-10-27 at 1600×1100; see [asset provenance](assets/readme/README.md). **No mobile validation was performed.**
+The real-data application/atlas tests require the local datasets and verified artifacts. Synthetic fixtures are confined to tests. Verification on 2026-10-27 covered source counts, cache manifests, saved benchmark reconciliation, all four application tabs, model prediction, microscopy controls, disclosures and representative exports. Screenshots were captured from the hosted application at 1600×1100; browser tooling, capture dates and conditions are recorded in [asset provenance](assets/readme/README.md). **No mobile validation was performed.**
 
 ## Scientific limitations and future research
 
