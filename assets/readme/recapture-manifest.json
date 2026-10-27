@@ -1,0 +1,212 @@
+{
+  "created_at": "2026-10-27T14:12:19.531010+00:00",
+  "source_url": "https://curriculum-consequence-economics-amanda.trycloudflare.com/",
+  "tool": "agent-browser 0.39.4, Chromium",
+  "capture_viewport": [
+    2000,
+    1800
+  ],
+  "capture_method": "Complete rendered sections at 80% raster scale; each section fits entirely inside the viewport before capture",
+  "condition": "Bortezomib/RKO/HTS002 for viability; cytochalasin B 30 uM, well B03, object 4 for microscopy",
+  "screenshots": [
+    {
+      "file": "cell-atlas.png",
+      "dimensions": [
+        1421,
+        480
+      ],
+      "sha256": "1ebb154ead3d79e1ede752e6c82db415d851def7ad820818b190407ea7a89855",
+      "captured_at": "2026-10-27T14:11:02.728634+00:00",
+      "visible_bounds_css": {
+        "bottom": 1200.171875,
+        "height": 600,
+        "left": 112,
+        "right": 1888,
+        "top": 600.171875,
+        "width": 1776,
+        "x": 112,
+        "y": 600.171875
+      }
+    },
+    {
+      "file": "cell-microscopy.png",
+      "dimensions": [
+        1421,
+        1006
+      ],
+      "sha256": "c69d9103d1e9797913a65e850fdf1641963cc5a1881b457aeadb8c7e2938ce51",
+      "captured_at": "2026-10-27T14:11:03.747634+00:00",
+      "visible_bounds_css": {
+        "bottom": 1529.1875,
+        "height": 1258.015625,
+        "left": 112,
+        "right": 1888,
+        "top": 271.171875,
+        "width": 1776,
+        "x": 112,
+        "y": 271.171875
+      }
+    },
+    {
+      "file": "discoveries.png",
+      "dimensions": [
+        1421,
+        1233
+      ],
+      "sha256": "67b06056309a78163a20069760ea9275cef74c6cfacb92a76b2404c823c4272c",
+      "captured_at": "2026-10-27T14:10:52.332633+00:00",
+      "visible_bounds_css": {
+        "bottom": 1688.0625,
+        "height": 1541.890625,
+        "left": 112,
+        "right": 1888,
+        "top": 146.171875,
+        "width": 1776,
+        "x": 112,
+        "y": 146.171875
+      }
+    },
+    {
+      "file": "dose-morphology.png",
+      "dimensions": [
+        1421,
+        647
+      ],
+      "sha256": "8672a369fc3b59dd9f5ee33d153e6e9961a6a284d11f0c05b62628e1a415ca05",
+      "captured_at": "2026-10-27T14:11:04.557634+00:00",
+      "visible_bounds_css": {
+        "bottom": 1436.6875,
+        "height": 809.5,
+        "left": 112,
+        "right": 1888,
+        "top": 627.1875,
+        "width": 1776,
+        "x": 112,
+        "y": 627.1875
+      }
+    },
+    {
+      "file": "drug-explorer.png",
+      "dimensions": [
+        1421,
+        1097
+      ],
+      "sha256": "5df44961c31fda707fe8c68280d0fa4ffd6bb04dc2f35c85b4678e661ce9736c",
+      "captured_at": "2026-10-27T14:10:54.089633+00:00",
+      "visible_bounds_css": {
+        "bottom": 1663.5625,
+        "height": 1371.390625,
+        "left": 112,
+        "right": 1888,
+        "top": 292.171875,
+        "width": 1776,
+        "x": 112,
+        "y": 292.171875
+      }
+    },
+    {
+      "file": "external-evidence.png",
+      "dimensions": [
+        1421,
+        129
+      ],
+      "sha256": "bdae6667b4f997f6644f978e936c4841b5a5fd046dc08b079555e5c4e1958975",
+      "captured_at": "2026-10-27T14:11:09.700635+00:00",
+      "visible_bounds_css": {
+        "bottom": 1326.453125,
+        "height": 161.78125,
+        "left": 112,
+        "right": 1888,
+        "top": 1164.671875,
+        "width": 1776,
+        "x": 112,
+        "y": 1164.671875
+      }
+    },
+    {
+      "file": "image-field-map.png",
+      "dimensions": [
+        1421,
+        480
+      ],
+      "sha256": "4f664bc20d91accbb4e45402db491cfc44c7baf5d669afed46399c23d9403a3c",
+      "captured_at": "2026-10-27T14:11:07.274634+00:00",
+      "visible_bounds_css": {
+        "bottom": 1474.484375,
+        "height": 600,
+        "left": 112,
+        "right": 1888,
+        "top": 874.484375,
+        "width": 1776,
+        "x": 112,
+        "y": 874.484375
+      }
+    },
+    {
+      "file": "microscopy-comparison.png",
+      "dimensions": [
+        1421,
+        646
+      ],
+      "sha256": "044da9635e2d53829a7acb64d3c60f7c1b6a454c8b009e9e68bd31fc2f9a5900",
+      "captured_at": "2026-10-27T14:11:06.396634+00:00",
+      "visible_bounds_css": {
+        "bottom": 1303.984375,
+        "height": 807.296875,
+        "left": 112,
+        "right": 1888,
+        "top": 496.6875,
+        "width": 1776,
+        "x": 112,
+        "y": 496.6875
+      }
+    },
+    {
+      "file": "validation.png",
+      "dimensions": [
+        1421,
+        1337
+      ],
+      "sha256": "489ccd6de0475559ec03530211f164f700771fb8bc775bb14a115ee50b15f7e2",
+      "captured_at": "2026-10-27T14:11:08.924635+00:00",
+      "visible_bounds_css": {
+        "bottom": 1735.953125,
+        "height": 1671.78125,
+        "left": 112,
+        "right": 1888,
+        "top": 64.171875,
+        "width": 1776,
+        "x": 112,
+        "y": 64.171875
+      }
+    }
+  ],
+  "video": {
+    "file": "walkthrough.mp4",
+    "dimensions": [
+      1600,
+      1100
+    ],
+    "duration_seconds": 42.8,
+    "fps": 15,
+    "codec": "H.264",
+    "audio": false,
+    "sha256": "dabad343e3b2d5d7b87fbaf4efad74fc724475c1f62eed515403a950a0aa7167",
+    "content": "Recorded desktop navigation across all four views, conditioned TabPFN prediction, cell/field maps, microscopy, dose profiles and validation",
+    "edits": "MP4 fast-start remux only; no fabricated frames"
+  },
+  "verification": {
+    "all_screenshots_visually_inspected": true,
+    "uniform_screenshot_width": 1421,
+    "rendered_readme_images_loaded": 10,
+    "rendered_readme_image_width": 1100,
+    "readme_horizontal_overflow": false,
+    "video_full_decode": "passed",
+    "browser_video_playback": "passed; readyState 4; no media error",
+    "scientific_tests": "Not rerun; documentation assets only",
+    "mobile_validation": "Not performed",
+    "all_capture_bounds_inside_viewport": true
+  },
+  "historical_capture_manifest": "capture-manifest.json",
+  "capture_scale": 0.8
+}
