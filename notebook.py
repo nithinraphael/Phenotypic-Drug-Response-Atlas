@@ -16,7 +16,9 @@ def _():
     import public_ui as ui
     import image_projection
     import external_evidence
-    return Path, Error, Ok, benchmark, catalog, components, embeddings, fitting, microscopy, mo, models, np, pl, prism, provenance, validation, ui, image_projection, external_evidence
+    import single_cells
+    import single_cell_ui
+    return Path, Error, Ok, benchmark, catalog, components, embeddings, fitting, microscopy, mo, models, np, pl, prism, provenance, validation, ui, image_projection, external_evidence, single_cells, single_cell_ui
 
 
 @app.cell
@@ -307,15 +309,22 @@ def _(components, field_select, image_metadata, imaging_compound, imaging_dose, 
                 '[Cell-DINO weights](https://ai.meta.com/resources/models-and-libraries/cell-dino-downloads/) and compatible channel preprocessing are still required.'),
             mo.download(lambda: projection.ok.select('image_field_id','Image_Metadata_Compound','Image_Metadata_Concentration','umap_1','umap_2','model_id').write_csv().encode(),filename='image_field_projection.csv',label='Download map coordinates'),
         ])
+    image_field_view = mo.vstack(image_parts,gap=1.25)
+    return image_field_view, map_plot
+
+
+@app.cell
+def _(mo, ui, imaging_compound, imaging_dose, field_select, single_cell_view, image_field_view):
     imaging_view = mo.vstack([
         mo.md('## Cell Explorer'),
         mo.md('Compare BBBC021 microscopy fields from MCF-7 cells. These imaging conditions are separate from the PRISM viability screen.'),
         ui.controls([imaging_compound,imaging_dose,field_select]),
-        *image_parts,
+        single_cell_view,
+        mo.accordion({'Image-field analysis':image_field_view}),
         mo.accordion({'Channels and map interpretation':mo.md('Red: actin. Green: tubulin. Blue: DAPI. Raw image intensities are unchanged. '
             'UMAP can distort distances and global geometry. Lines joining dose-group centroids do not represent measured time trajectories; clusters alone do not establish mechanisms.')}),
     ],gap=1.25)
-    return imaging_view, map_plot
+    return (imaging_view,)
 
 
 @app.cell
@@ -419,6 +428,102 @@ def _(mo):
     get_map_selection, set_map_selection = mo.state(None)
     map_color = mo.ui.dropdown(['Concentration','Compound'],value='Concentration',label='Map color')
     return get_map_selection, set_map_selection, map_color
+
+
+@app.cell
+def _(Path, mo, provenance, single_cells):
+    _root = str(mo.cli_args().get('cell-atlas') or 'data/bbbc021/single_cells/atlas-v1')
+    _path = Path(_root)/'manifest.json'
+    cell_atlas_identity = provenance.sha256(_path) if _path.is_file() else None
+    @mo.cache
+    def read_cell_atlas(identity, root):
+        return single_cells.load_atlas(root)
+    cell_atlas = read_cell_atlas(cell_atlas_identity,_root)
+    return cell_atlas, cell_atlas_identity
+
+
+@app.cell
+def _(mo):
+    get_cell_selection, set_cell_selection = mo.state(None)
+    cell_color = mo.ui.dropdown(['Compound','Dose','Cell area','Nuclear fraction'],value='Compound',label='Color cells by',full_width=True)
+    return get_cell_selection, set_cell_selection, cell_color
+
+
+@app.cell
+def _(cell_atlas, field_select, get_cell_selection, mo, pl):
+    _cells = cell_atlas.ok['cells'].filter(pl.col('image_field_id')==field_select.value).sort('mask_label') if cell_atlas.is_ok() else pl.DataFrame()
+    _options = {f"Cell {row['mask_label']} · {row['area_px']:,} px²":row['cell_id'] for row in _cells.iter_rows(named=True)}
+    _default = next((label for label,value in _options.items() if value==get_cell_selection()),next(iter(_options),None))
+    cell_selector = mo.ui.dropdown(_options,value=_default,label='Cell in selected field',searchable=True,full_width=True)
+    return (cell_selector,)
+
+
+@app.cell
+def _(cell_atlas, cell_selector, cell_color, imaging_compound, imaging_dose, mo, pl, ui, single_cell_ui, set_cell_selection, set_map_selection):
+    cell_plot = None
+    if cell_atlas.is_ok():
+        _data = cell_atlas.ok['cells']
+        _figure = single_cell_ui.cell_figure(_data,imaging_compound.value,imaging_dose.value,cell_selector.value,cell_color.value)
+        def _choose_cell(points):
+            _id = ui.selected_image_field(points,_figure)
+            if _id:
+                _row = _data.filter(pl.col('cell_id')==_id)
+                if _row.height==1:
+                    set_cell_selection(_id)
+                    set_map_selection(_row['image_field_id'][0])
+        cell_plot = mo.ui.plotly(_figure,config=ui.PLOT_CONFIG,on_change=_choose_cell)
+    return (cell_plot,)
+
+
+@app.cell
+def _(cell_atlas, cell_selector, field_select, single_cell_ui, mo):
+    cell_detail_view = single_cell_ui.cell_view(cell_atlas.ok,cell_selector.value,
+        cell_atlas.ok['manifest']['inputs']['data/bbbc021/metadata.csv'],field_select.value) if cell_atlas.is_ok() else mo.md('')
+    return (cell_detail_view,)
+
+
+@app.cell
+def _(cell_atlas, imaging_compound, single_cell_ui, mo, pl, ui):
+    cell_area_plot, cell_change_plot, cell_well_table = None,None,None
+    cell_population_view = mo.md('')
+    if cell_atlas.is_ok():
+        _atlas = cell_atlas.ok
+        _area,_change,_wells,_changes = single_cell_ui.population_figures(_atlas,imaging_compound.value)
+        cell_area_plot = mo.ui.plotly(_area,config=ui.PLOT_CONFIG)
+        cell_change_plot = mo.ui.plotly(_change,config=ui.PLOT_CONFIG)
+        cell_well_table = mo.ui.table(_wells,selection=None,show_data_types=False,show_column_summaries=False)
+        _lead = _changes.filter(pl.col('cosine_change').is_finite()).sort('cosine_change',descending=True).head(1)
+        _lead_text = (f"Largest adjacent-dose difference: {_lead['lower_dose_um'][0]:g} to {_lead['upper_dose_um'][0]:g} μM "
+            f"(cosine distance {_lead['cosine_change'][0]:.4f}). This is a descriptive candidate interval for follow-up, not a confirmed biological transition.") if _lead.height else 'No adjacent-dose comparison is available for this condition.'
+        cell_population_view = mo.vstack([
+            mo.md('### Dose-dependent morphology'),
+            mo.md(_lead_text),
+            mo.hstack([cell_area_plot.style({'display':'grid','height':'510px'}),cell_change_plot.style({'display':'grid','height':'510px'})],widths=[1,1],gap=2),
+            mo.md('Boxes describe cell distributions, not uncertainty. Profile differences average fields and wells equally. Cells are not independent biological replicates; no significance test is reported.'),
+            mo.accordion({'Sampled wells and cell counts':cell_well_table}),
+            mo.download(lambda:_wells.write_csv().encode(),filename='cell_well_summaries.csv',label='Download well summaries'),
+        ],gap=1.25)
+    return cell_population_view, cell_area_plot, cell_change_plot, cell_well_table
+
+
+@app.cell
+def _(cell_atlas, cell_atlas_identity, cell_selector, cell_color, cell_plot, cell_detail_view, cell_population_view, single_cell_ui, mo, ui, pl):
+    if cell_atlas.is_error():
+        single_cell_view = ui.unavailable('Individual-cell analysis unavailable',cell_atlas.error)
+    else:
+        _atlas = cell_atlas.ok
+        single_cell_view = mo.vstack([
+            mo.md('## Individual-cell atlas'),
+            mo.md(f"{_atlas['cells'].height:,} retained cell crops from {_atlas['manifest']['fields']} sampled fields. Each point links to its source image and mask. "
+                  'Generic DINO ImageNet features describe predicted cell crops; they do not establish cell identities or mechanisms.'),
+            ui.controls([cell_selector,cell_color]),
+            cell_plot.style({'display':'grid','height':'600px'}),
+            cell_detail_view,
+            cell_population_view,
+            mo.download(lambda:_atlas['cells'].with_columns(pl.lit(cell_atlas_identity).alias('atlas_manifest_sha256')).write_csv().encode(),filename='cell_atlas.csv',label='Download cell atlas table'),
+            single_cell_ui.methods(_atlas),
+        ],gap=1.25)
+    return (single_cell_view,)
 
 
 if __name__ == '__main__':

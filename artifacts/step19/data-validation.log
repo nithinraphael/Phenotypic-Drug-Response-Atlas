@@ -1,0 +1,15 @@
+{
+  "status": "passed",
+  "analysis_manifest_sha256": "e905e3a48971962671b7263b65db8a79eeb09f8de85efc47a104e557febcdc8c",
+  "cells": 5857,
+  "sampled_fields": 60,
+  "fields_with_retained_cells": 60,
+  "unique_wells": 60,
+  "raw_crops_compared": 180,
+  "fragmented_retained_masks": 258,
+  "embedding_dimensions": 384,
+  "coordinate_dimensions": 2,
+  "norm_tolerance": 1e-05,
+  "population_recalculation_tolerance": 1e-06,
+  "segmentation_accuracy": "Not estimable: no matched manual reference masks"
+}

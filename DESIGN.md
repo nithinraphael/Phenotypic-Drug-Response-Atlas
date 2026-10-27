@@ -189,3 +189,7 @@ Existing microscopy images fill their columns without changing aspect ratio. Cap
 ## Step 18.1 restored states
 
 The existing design remains unchanged. The image-field map uses a two-line model/condition title, native Plotly color legends and a 600px grid wrapper to preserve interactive bounds across desktop/mobile resize. Points link to the exact microscopy field; captions identify the ImageNet baseline and unavailable Cell-DINO evidence. Prediction exports sit beside measured-observation downloads with Prior Labs attribution. The external source inventory remains inside a disclosure beside explicit comparison blockers.
+
+## Step 19 desktop Cell Explorer
+
+The existing journal-plate design is preserved. A 600px shared cell UMAP leads the cell workspace; native color and searchable-cell controls precede a two-column field-overlay/crop viewer. Gold outlines identify predicted cells, cyan outlines predicted nuclei, and orange identifies selection. Native metric cards report segmentation/QC counts. Dose distributions and profile differences follow; methods and existing image-field analysis remain disclosures. Crop/table/provenance downloads stay beside their related evidence. This step changes and verifies desktop only.

@@ -112,3 +112,23 @@ Browser checks ran real TabPFN v2 inference and held-out evaluation, verified pl
 Earlier failing attempts are retained: 65-test baseline with 3 failures; 71-test follow-up with 1 report-reconciliation failure; browser attempts exposing map callback/payload and mobile containment defects. Final checks supersede these after targeted repairs. A source-table screenshot initially preceded hydration; the focused check and recapture resolved that evidence issue.
 
 Not executed: Cell-DINO inference (no approved checkpoint/channel compatibility), cross-dataset correlations/intervals/replication classification (missing reviewed mappings and CTRP processing provenance), GPU performance (CUDA unavailable), cross-browser, physical mobile touch and screen-reader checks. These are limitations, not passed tests. See STEP18_1_RECOVERY.md.
+
+## Step 19 final execution (2026-10-26)
+
+Environment: Python 3.13.15, marimo 0.25.2, Polars 2.0.0, NumPy 2.5.4, PyTorch 2.14.1, torchvision 0.29.1, UMAP-learn 0.5.12, GTX 1650 (4 GB). Base manifest/lock unchanged. Optional inference used InstanSeg-torch 0.1.2 and Cellpose 4.0.8; complete versions/hashes are in the run manifest and `artifacts/step19/inference-environment.json`.
+
+| Command/check | Actual outcome |
+| --- | --- |
+| `MPLCONFIGDIR=/tmp/atlas-matplotlib .venv/bin/python -m unittest discover -s tests -v` | 83 passed, 0 failures, 0 skips; 100.207 seconds. `artifacts/step19/test-results-final.log`. |
+| `uv run marimo check notebook.py` | Exit 0. |
+| `.venv/bin/python tests/check_notebooks.py` | All 16 default rules passed for notebook.py, dev_notebook.py and audit_notebook.py. |
+| `uv run python notebook.py` | Complete notebook execution, exit 0; no TabPFN inference requested. |
+| `MPLCONFIGDIR=/tmp/atlas-matplotlib .venv/bin/python tests/validate_cell_atlas.py` | Passed: 5,857 cells, 60 fields/wells, 180 original-pixel crop comparisons, ID/mask/embedding checks and population recalculation. 258 retained masks contain disconnected components. |
+| `uv run --no-project --offline --with playwright --with numpy==2.5.4 --with tifffile==2026.10.15 python tests/browser_step19.py` | 12 desktop interaction groups passed, 1440×1050; no browser JavaScript errors. Logs/screenshots/exports in `artifacts/step19/desktop`. |
+| `uv run --with instanseg-torch==0.1.2 --with cellpose==4.0.8 python single_cells.py` | Actual pretrained full atlas inference completed: 60 fields, 5,857 retained objects; execution log and completed manifest preserved. |
+| Explicit CPU pretrained inference smoke | Real 256×256 control region: 20 cell objects, 23 nuclear objects; 48.80 seconds. `artifacts/step19/cpu-fallback-smoke.json`. |
+| `git diff --check` | Passed. |
+
+Desktop browser checks covered native UMAP mouse selection, compound/dose/field/cell synchronization, searchable cell selection, all four color modes, raw uint16 TIFF/source-pixel equality, QC/provenance/table/well exports, dose changes, unavailable fields clearing stale crops, preserved image-field map/microscopy, tab persistence, PRISM separation and unchanged mask/crop/embedding cache hashes.
+
+Visually inspected final desktop overview, shared UMAP, linked field/crop/QC and morphology figures, plus actual vehicle-control and cytochalasin-B overlays. No mobile checks performed: explicitly excluded by the user. Matched segmentation reference accuracy, CellProfiler comparison and biological inferential tests were not executed because required reference masks, configured baseline and independent replication are unavailable. No passing status is assigned to those analyses. A separate Impeccable finish-review agent could not execute because its usage limit was reached; visual inspection was completed directly, with no independent-review disposition claimed.

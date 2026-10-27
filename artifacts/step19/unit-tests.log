@@ -1,0 +1,14 @@
+test_cell_plot_click_uses_stable_ids_without_temporal_lines (test_single_cells.SingleCellTests.test_cell_plot_click_uses_stable_ids_without_temporal_lines) ... ok
+test_empty_invalid_and_noninteger_masks_fail_honestly (test_single_cells.SingleCellTests.test_empty_invalid_and_noninteger_masks_fail_honestly) ... ok
+test_identity_coordinates_and_exclusions (test_single_cells.SingleCellTests.test_identity_coordinates_and_exclusions) ... ok
+test_minor_nuclear_overlap_does_not_create_another_nucleus (test_single_cells.SingleCellTests.test_minor_nuclear_overlap_does_not_create_another_nucleus) ... ok
+test_missing_atlas_does_not_invent_cells (test_single_cells.SingleCellTests.test_missing_atlas_does_not_invent_cells) ... ok
+test_population_profiles_weight_fields_and_wells_not_cell_counts (test_single_cells.SingleCellTests.test_population_profiles_weight_fields_and_wells_not_cell_counts) ... ok
+test_raw_crop_export_contains_original_uint16_channels (test_single_cells.SingleCellTests.test_raw_crop_export_contains_original_uint16_channels) ... ok
+test_raw_crops_preserve_all_channels_and_spatial_bounds (test_single_cells.SingleCellTests.test_raw_crops_preserve_all_channels_and_spatial_bounds) ... ok
+test_shuffled_embedding_identifiers_join_to_correct_cells (test_single_cells.SingleCellTests.test_shuffled_embedding_identifiers_join_to_correct_cells) ... ok
+
+----------------------------------------------------------------------
+Ran 9 tests in 0.427s
+
+OK

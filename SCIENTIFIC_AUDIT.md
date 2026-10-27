@@ -88,3 +88,9 @@ Official DINO ViT-S/8 weights and source code were authenticated. Fresh image-fi
 Real TabPFN v2 inference, source-labeled exports, license attribution, conditioning semantics and reactive separation are exposed publicly. A native marimo selection payload omitted custom data; server-side trace/point resolution repairs microscopy linking.
 
 Scientific regression tests exposed unstable ordering in the existing common-prediction join. Left-order preservation fixes repeated floating-point reductions. Stored predictions were reaggregated with preserved original lineage; no prior report was overwritten.
+
+## Step 19 findings
+
+Actual pretrained inference and raw-pixel checks are documented in STEP19_RESULTS.md. InstanSeg cell segmentation failed visual suitability on the control; uniform Cellpose-SAM fallback avoids switching model with dose. InstanSeg nuclei are predictions used for descriptive QC, not reference truth. Generic DINO is labeled accurately.
+
+No matched manual masks, optical calibration or established biological replicate independence were recovered. Segmentation accuracy and inferential population transitions remain unavailable. Retained disconnected objects are counted explicitly; no claim every mask is one true cell. Descriptive adjacent-dose distances use high-dimensional well profiles, never UMAP paths. No PRISM viability or biological tipping-point claims derive from microscopy.

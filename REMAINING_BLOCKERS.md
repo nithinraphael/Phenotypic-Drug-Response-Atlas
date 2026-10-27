@@ -25,3 +25,13 @@ Browser tooling was found in the existing cache. Desktop/mobile Chromium interac
 ## Step 18.1 status
 
 Recovered: official GDSC2 release identity, DINO baseline checkpoint/source identity, fresh 240-field DINO/UMAP cache, and real TabPFN inference/export connections. No approved Cell-DINO checkpoint path or URL was supplied. Meta's Cell-DINO access form and supported channel preprocessing are required; the baseline is never labeled Cell-DINO. CUDA is unavailable on this execution host, so GPU memory use and GTX 1650 behavior remain untested. Cross-dataset correlations, confidence intervals and replication classifications remain withheld until chemical/cell-line crosswalks, CTRP transformations and comparable metric definitions are verified.
+
+## Step 19 limitations
+
+- Matched manually reviewed BBBC021 cell masks/image mapping are missing. Segmentation IoU/Dice and rigorous error rates cannot be calculated; UI labels masks as predictions. Zenodo mapping remains unverified.
+- CellProfiler is not configured/executed. No baseline comparison claimed; requires a verified pipeline and matched inputs.
+- Optical pixel size is missing. Micron measurements suppressed; pixels retained.
+- Independent biological replication is unverified. Inferential transition tests/intervals suppressed; per-well descriptive summaries retained.
+- Generic ImageNet DINO supports exploratory crops only. Cell-DINO-specific claims remain disabled.
+- 180 additional image fields were not processed. Optional explicit new-run command supports them; current scope is 60 fields.
+- Predicted masks can merge or fragment cells; 258 retained masks have disconnected components. Manual review/reference masks are required before treating object-level populations as accurate cell counts.

@@ -75,3 +75,13 @@ image_projection.py recomputed all 240 image-field embeddings (384 dimensions) a
 A pre-existing unordered benchmark join caused floating-point reduction differences across repeated aggregation. The join now preserves observation order. Original prediction artifacts were hash-verified and reused in reports/runs/step18-1-2026-10-26; the new manifest identifies the original run and current aggregation code. No models were refitted for this reaggregation. Metrics agree within 1e-14 and all counts are unchanged. The image projection was reverified after this unrelated analysis-code change; its initial manifest is retained and output bytes are unchanged.
 
 TabPFN uses the existing publisher-verified v2 checkpoint, log10 micromolar doses and explicit CPU configuration. The current publisher license (Prior Labs License 1.1) is retained in artifacts/step18_1/TabPFN-LICENSE.txt; the public interface includes the required attribution. Prediction CSVs identify compound, cell, screen, model, checkpoint and feature representation.
+
+## Step 19 cell atlas
+
+Uses only local BBBC021 metadata and plate images; no PRISM join. Source hashes, all field artifacts, model/code identities, preprocessing and versions are recorded in `data/bbbc021/single_cells/atlas-v1/manifest.json` (SHA256 `e905e3a48971962671b7263b65db8a79eeb09f8de85efc47a104e557febcdc8c`). Checkpoint source URLs/publisher hash verification are in `config/single_cells.json` and `artifacts/step19/cellpose-model-record.json`.
+
+Pre-segmented Zenodo record 22763120 was inspected through metadata and two final archive parts, whose published MD5s were checked. A traceable image mapping was not established, so its masks were not used. No full 2.9 GB dataset download. Official InstanSeg and pinned Cellpose-SAM weights were explicitly acquired; existing generic DINO weights reused.
+
+One stable first field per each of 60 wells; 5,857 retained objects. Raw channels DAPI/Tubulin/Actin retain uint16 pixels. Display percentile adjustment, isolated mask, aspect-preserving padding to 224 and ImageNet normalization apply only to DINO/display inputs. Spatial units are pixels. All masks and excluded rows remain in per-field caches. IDs include image-field identifier and original mask label.
+
+Each field cache keys source hashes, generator/configuration, model/checkpoint, package versions and preprocessing. A final receipt hashes all field and combined artifacts; loaders reject mismatches or positional-only coordinate assignment. Shared UMAP: cosine, L2 input, 15 neighbors, min_dist 0.1, seed 42. Crops and feature vectors are derived image-level cell-object measurements, with unverified biological replicate independence.

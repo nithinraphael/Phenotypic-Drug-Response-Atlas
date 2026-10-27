@@ -24,3 +24,5 @@ TabPFN v2 is explicitly configured on CPU using publisher-hash-matched cached we
 Historical research reports, figures and development code are quarantined under `legacy/unverified`. Their results are not accepted empirical evidence. Original raw data remain unchanged.
 
 Step 18.1 restores a verified, explicitly labeled DINO ImageNet baseline map for 240 BBBC021 image fields, native microscopy linking and TabPFN prediction exports. GDSC release 8.2 is authenticated; cross-dataset comparisons still require reviewed identifier crosswalks and CTRP processing provenance. Cell-DINO requires approved weights and compatible channel preprocessing. See [METHODS.md](METHODS.md) and [REMAINING_BLOCKERS.md](REMAINING_BLOCKERS.md).
+
+Cell Explorer also loads a verified individual-cell atlas: 5,857 retained predicted objects from 60 BBBC021 fields, with linked microscopy/crops, generic DINO embeddings, shared UMAP, dose summaries and raw exports. See [STEP19_RESULTS.md](STEP19_RESULTS.md) for actual inference, QC and limitations; [CONFIGURATION.md](CONFIGURATION.md) for explicit optional generation. Segmentation and embeddings never run automatically in the public interface.

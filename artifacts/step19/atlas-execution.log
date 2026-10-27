@@ -1,0 +1,71 @@
+Installed 63 packages in 150ms
+/home/ronaldo/.cache/uv/archive-v0/arvRcE0ERyM6LGNNUm4gF/lib/python3.13/site-packages/torch/jit/_serialization.py:176: FutureWarning: `torch.jit.load` is deprecated. Please switch to `torch.export`.
+  warnings.warn(
+/home/ronaldo/.cache/uv/archive-v0/arvRcE0ERyM6LGNNUm4gF/lib/python3.13/site-packages/instanseg/inference_class.py:551: UserWarning: Pixel size not provided, this may lead to innacurate results.
+  warnings.warn("Pixel size not provided, this may lead to innacurate results.")
+/home/ronaldo/.cache/uv/archive-v0/arvRcE0ERyM6LGNNUm4gF/lib/python3.13/site-packages/instanseg/utils/pytorch_utils.py:286: UserWarning: Sparse invariant checks are implicitly disabled. Memory errors (e.g. SEGFAULT) will occur when operating on a sparse tensor which violates the invariants, but checks incur performance overhead. To silence this warning, explicitly opt in or out. See `torch.sparse.check_sparse_tensor_invariants.__doc__` for guidance.  (Triggered internally at /__w/pytorch/pytorch/aten/src/ATen/Context.cpp:848.)
+  sparse_onehot = torch.sparse_coo_tensor(torch.stack((zz, xxyy)).long(), (torch.ones_like(xxyy).float()),
+/home/ronaldo/.cache/uv/archive-v0/arvRcE0ERyM6LGNNUm4gF/lib/python3.13/site-packages/instanseg/utils/pytorch_utils.py:312: UserWarning: Sparse CSR tensor support is in beta state. If you miss a functionality in the sparse tensor support, please submit a feature request to https://github.com/pytorch/pytorch/issues. (Triggered internally at /__w/pytorch/pytorch/aten/src/ATen/SparseCsrTensorImpl.cpp:49.)
+  intersection = torch.sparse.mm(onehot1, onehot2.T).to_dense()
+1/60: DMSO 0.0 μM; 164 retained cells
+2/60: cytochalasin B 30.0 μM; 81 retained cells
+3/60: cytochalasin B 10.0 μM; 60 retained cells
+4/60: cytochalasin B 3.0 μM; 98 retained cells
+5/60: cytochalasin B 1.0 μM; 171 retained cells
+6/60: cytochalasin B 0.3 μM; 77 retained cells
+7/60: cytochalasin B 0.1 μM; 174 retained cells
+8/60: cytochalasin B 0.03 μM; 152 retained cells
+9/60: cytochalasin B 0.01 μM; 116 retained cells
+10/60: taxol 0.3 μM; 35 retained cells
+11/60: DMSO 0.0 μM; 166 retained cells
+12/60: aphidicolin 10.0 μM; 81 retained cells
+13/60: aphidicolin 3.0 μM; 87 retained cells
+[W1026 15:44:07.970325278 CUDACachingAllocator.cpp:3934] memory allocation failed with OOM on device 0 while trying to allocate 81788928 bytes (free: 3276800, total: 3898540032).
+14/60: aphidicolin 1.0 μM; 114 retained cells
+15/60: aphidicolin 0.3 μM; 119 retained cells
+16/60: aphidicolin 0.1 μM; 107 retained cells
+17/60: aphidicolin 0.03 μM; 175 retained cells
+18/60: aphidicolin 0.01 μM; 184 retained cells
+19/60: aphidicolin 0.003 μM; 136 retained cells
+20/60: taxol 0.3 μM; 33 retained cells
+21/60: DMSO 0.0 μM; 130 retained cells
+22/60: taxol 3.0 μM; 50 retained cells
+23/60: taxol 1.0 μM; 30 retained cells
+24/60: taxol 0.3 μM; 53 retained cells
+25/60: taxol 0.1 μM; 42 retained cells
+26/60: taxol 0.03 μM; 31 retained cells
+27/60: taxol 0.01 μM; 41 retained cells
+28/60: taxol 0.003 μM; 68 retained cells
+29/60: taxol 0.001 μM; 107 retained cells
+30/60: taxol 0.3 μM; 51 retained cells
+31/60: taxol 0.3 μM; 49 retained cells
+32/60: nocodazole 3.0 μM; 45 retained cells
+33/60: nocodazole 1.0 μM; 45 retained cells
+34/60: nocodazole 0.3 μM; 39 retained cells
+35/60: nocodazole 0.1 μM; 36 retained cells
+36/60: nocodazole 0.03 μM; 67 retained cells
+37/60: nocodazole 0.01 μM; 117 retained cells
+38/60: nocodazole 0.003 μM; 74 retained cells
+39/60: nocodazole 0.001 μM; 163 retained cells
+40/60: DMSO 0.0 μM; 179 retained cells
+41/60: taxol 0.3 μM; 29 retained cells
+42/60: AZ-H 30.0 μM; 133 retained cells
+43/60: AZ-H 10.0 μM; 116 retained cells
+44/60: AZ-H 3.0 μM; 135 retained cells
+45/60: AZ-H 1.0 μM; 144 retained cells
+46/60: AZ-H 0.3 μM; 106 retained cells
+47/60: AZ-H 0.1 μM; 143 retained cells
+48/60: AZ-H 0.03 μM; 162 retained cells
+49/60: AZ-H 0.01 μM; 169 retained cells
+50/60: DMSO 0.0 μM; 136 retained cells
+51/60: taxol 0.3 μM; 94 retained cells
+52/60: AZ-A 30.0 μM; 79 retained cells
+53/60: AZ-A 10.0 μM; 62 retained cells
+54/60: AZ-A 3.0 μM; 69 retained cells
+55/60: AZ-A 1.0 μM; 71 retained cells
+56/60: AZ-A 0.3 μM; 101 retained cells
+57/60: AZ-A 0.1 μM; 73 retained cells
+58/60: AZ-A 0.03 μM; 43 retained cells
+59/60: AZ-A 0.01 μM; 99 retained cells
+60/60: DMSO 0.0 μM; 146 retained cells
+{'cells': 5857, 'fields': 60, 'runtime_seconds': 2859.104672197951, 'peak_gpu_allocated_bytes': 2472572416}

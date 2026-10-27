@@ -1,0 +1,16 @@
+{
+  "instanseg-torch": "0.1.2",
+  "cellpose": "4.0.8",
+  "torch": "2.14.1",
+  "torchvision": "0.29.1",
+  "numpy": "2.5.4",
+  "scipy": "1.18.1",
+  "scikit-image": "0.26.0",
+  "fastremap": "1.21.0",
+  "fill-voids": "2.1.2",
+  "opencv-python-headless": "5.0.0.93",
+  "imagecodecs": "2026.10.10",
+  "tifffile": "2026.10.15",
+  "umap-learn": "0.5.12",
+  "polars": "2.0.0"
+}

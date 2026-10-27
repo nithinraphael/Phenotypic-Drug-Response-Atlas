@@ -1,0 +1,13 @@
+{
+  "source": "https://zenodo.org/records/22763120",
+  "version": "v1",
+  "metadata_sha256": "7fd8a9363970548736a03eba3e14bd2b737c967f0e0fdf436bc91004676f50e7",
+  "local_fields": 240,
+  "archive_entries": 39075,
+  "exact_id_compound_matches": 0,
+  "decision": "No traceable field mapping established; supplied masks not reused",
+  "downloaded_parts": {
+    "dataset.zip.part_85": "053fc9e2fe51e0c561b6f41438d7a481dba2e43a68ce33346f45edac598a26b5",
+    "dataset.zip.part_86": "d04c0db2a4e8edcf8ee27a10135d7b8091b2a559aeeb9d0119bd300020db34a0"
+  }
+}

@@ -1,0 +1,25 @@
+{
+  "instanseg_checkpoint": "data/bbbc021/single_cells/models/fluorescence-0.1.1/instanseg.pt",
+  "instanseg_model_version": "0.1.1",
+  "instanseg_package": "0.1.2",
+  "instanseg_source": "https://github.com/instanseg/instanseg/releases/download/instanseg_models_v0.1.1/fluorescence_nuclei_and_cells.zip",
+  "cellpose_checkpoint": "data/bbbc021/single_cells/models/cpsam",
+  "cellpose_package": "4.0.8",
+  "cellpose_source": "https://huggingface.co/mouseland/cellpose-sam/resolve/7c61431b5fbb078f3296754bd15d9f51b320f837/cpsam",
+  "cellpose_publisher_sha256": "e1440429eb384f95afe32bcba6510f90d518eaedc917ede549bed6804004abe2",
+  "verified_files": {
+    "data/bbbc021/single_cells/models/fluorescence-0.1.1/instanseg.pt": "636833d26b5afcc03bde1357b3e669cf015e91dd1edda863aa51c19eee986562",
+    "data/bbbc021/single_cells/models/cpsam": "e1440429eb384f95afe32bcba6510f90d518eaedc917ede549bed6804004abe2",
+    "/home/ronaldo/.cache/torch/hub/checkpoints/dino_deitsmall8_pretrain.pth": "55c8b267f479b614ec20858947ce361ba804846c193e20be74263a096bb6d75e",
+    "data/bbbc021/verified_model/hubconf.py": "fa80babf82c71d2123e23b05061eb1991a1fbc9877238f250b2a25023e910f72",
+    "data/bbbc021/verified_model/vision_transformer.py": "b1f998d5f49ab43666b9fc6d007c5f6540c3ead2e8645e144f74045f63ff44d7",
+    "data/bbbc021/verified_model/utils.py": "962a97e1acda1c986dfd921275325e4083f9016dddadcf018f1ccf03fa600eab",
+    "data/bbbc021/verified_model/LICENSE": "50e6751797c50dedd75ef1b8a0d9e42f5f8472e9fbce91f34718e9f97b0c780a"
+  },
+  "fallback_reason": "InstanSeg pilot produced many non-nuclear cell fragments; Cellpose-SAM cell boundaries were visually more coherent. InstanSeg retained for independent nuclear QC predictions.",
+  "minimum_area_px": 20,
+  "crop_padding_px": 8,
+  "embedding_batch_size": 4,
+  "preprocessing": "Raw DAPI/Tubulin/Actin retained. DINO: Actin/Tubulin/DAPI RGB scaled by field 1st/99.5th percentiles, isolate mask, aspect-preserving zero padding to 224, ImageNet normalization.",
+  "physical_pixel_size_um": null
+}

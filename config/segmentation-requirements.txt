@@ -1,0 +1,7 @@
+instanseg-torch==0.1.2
+cellpose==4.0.8
+scikit-image==0.26.0
+fastremap==1.21.0
+fill-voids==2.1.2
+opencv-python-headless==5.0.0.93
+imagecodecs==2026.10.10

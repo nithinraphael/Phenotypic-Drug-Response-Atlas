@@ -74,3 +74,15 @@ Scientific analysis modules, components.py, dependencies, model configuration, r
 | METHODS.md, DATA_PROVENANCE.md, CONFIGURATION.md, model_inventory.json, REMAINING_BLOCKERS.md | Record recovered provenance, actual computation, license and unresolved evidence | Prior claims narrowed to executed scope |
 
 Step 18.1 documentation also updates README.md, DESIGN.md, reports/LATEST.md, TEST_RESULTS.md and STEP18_1_RECOVERY.md. These point to current methods, responsive map behavior, preserved report lineage, actual verification and remaining blockers. artifacts/step18_1 contains execution logs, screenshots, source authentication, license, preservation audit and the partial recovery manifest. No atlas.css change remains.
+
+## Step 19: individual-cell analysis
+
+- `single_cells.py`: new explicit pretrained inference command, stable cell metadata, raw crops, per-field receipts, strict cache loading, equal-weight descriptive summaries and shared UMAP. No prior scientific implementation replaced. Optional inference dependencies stay outside the base environment.
+- `single_cell_ui.py`: cell map, linked source overlays/crops, dose summaries, QC and provenance/raw exports. Public rendering consumes verified analytical outputs.
+- `notebook.py`: integrates single-cell controls and selection state into Cell Explorer; isolates existing image-field analysis in a disclosure; optional `--cell-atlas` selects a verified run. Image-field calculations remain independent of cell/color changes.
+- `config/single_cells.json`, `config/segmentation-requirements.txt`: explicit verified pretrained identities and pinned optional inference environment. Existing base dependency manifest/lock unchanged.
+- `tests/test_single_cells.py`, `tests/test_application.py`: scientific behavior and real atlas application coverage. `tests/validate_cell_atlas.py` checks actual raw pixels, IDs, masks, embeddings and population recalculation. `tests/browser_step19.py` tests desktop interactions/exports without running inference.
+- `METHODS.md`, `CONFIGURATION.md`, `README.md`, `DESIGN.md`, audit/provenance/blocker/test documents and `STEP19_RESULTS.md`: actual sampling, processing, reproducibility and limitations.
+- `artifacts/step19`: execution logs, model-source receipts, integrity results and desktop verification artifacts. Generated masks/crops/weights stay under ignored data paths; preserve them when moving the project.
+
+Compatibility: base dependencies, PRISM analysis, prior caches and development notebooks preserved. Cell Explorer requires the verified local single-cell run; absent or incompatible artifacts produce an unavailable state.

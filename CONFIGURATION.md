@@ -50,3 +50,13 @@ Configured TabPFN weights match publisher SHA-256 `2ab5a07d5c41dfe6db9aa7ae106fc
 config/dino_baseline.json pins the existing DINO ViT-S/8 checkpoint and official architecture/helper hashes. image_projection.py computes image-field embeddings with CPU float32, batch size 2 by default; --device cuda is explicit and rejects unavailable CUDA. It never downloads models, trains weights or overwrites an existing projection. The generated projection_config.json/NPZ/JSON are consumed by the public map. This configuration is a DINO ImageNet baseline, not a Cell-DINO fallback. See METHODS.md for transforms and domain limitations.
 
 config/external_sources.json records authenticated GDSC release bytes and the unverified CTRP local subset. It supplies source availability/counts only; config/validation.json and reviewed mappings are still required for comparisons.
+
+## Step 19 cell atlas
+
+Run `uv run --with-requirements config/segmentation-requirements.txt python single_cells.py --device cuda` after the verified checkpoints listed in config/single_cells.json are present. The default samples one field per well and writes data/bbbc021/single_cells/atlas-v1. `--device cpu` uses the same pretrained checkpoints with a separate device cache identity. `--fields-per-well 4 --output <new-directory>` can analyze every available field; output directories are never overwritten. Do not replace the active immutable run without reviewing its provenance and restarting the application.
+
+Per-field caches live under data/bbbc021/single_cells/fields/<signature>. They contain masks.npz, all_cells.parquet, retained-cell metadata, crops.zip and embedding arrays with a completed hash receipt. Incomplete fields are recomputed on restart; valid completed caches are reused. The public app loads the completed atlas-v1 manifest only. It never runs segmentation or DINO inference from selector changes. Existing image-level viewing remains available independently.
+
+`python tests/validate_cell_atlas.py` checks original pixels against cached crops, cell geometry, identifier alignment, embedding norms, UMAP and population-output reconciliation. This is computational verification, not manually annotated segmentation accuracy.
+
+To open another completed atlas without changing its scientific configuration, use `uv run marimo run notebook.py -- --cell-atlas data/bbbc021/single_cells/<run-directory>`. The default is atlas-v1. The loader applies the same manifest/hash/identifier checks to every selected run.

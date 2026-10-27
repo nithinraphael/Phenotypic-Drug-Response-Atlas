@@ -1,0 +1,9 @@
+/home/ronaldo/.cache/uv/archive-v0/OReC1j3VdMW1HGI8RjN3A/lib/python3.13/site-packages/torch/jit/_serialization.py:176: FutureWarning: `torch.jit.load` is deprecated. Please switch to `torch.export`.
+  warnings.warn(
+/home/ronaldo/.cache/uv/archive-v0/OReC1j3VdMW1HGI8RjN3A/lib/python3.13/site-packages/instanseg/inference_class.py:551: UserWarning: Pixel size not provided, this may lead to innacurate results.
+  warnings.warn("Pixel size not provided, this may lead to innacurate results.")
+/home/ronaldo/.cache/uv/archive-v0/OReC1j3VdMW1HGI8RjN3A/lib/python3.13/site-packages/instanseg/utils/pytorch_utils.py:286: UserWarning: Sparse invariant checks are implicitly disabled. Memory errors (e.g. SEGFAULT) will occur when operating on a sparse tensor which violates the invariants, but checks incur performance overhead. To silence this warning, explicitly opt in or out. See `torch.sparse.check_sparse_tensor_invariants.__doc__` for guidance.  (Triggered internally at /__w/pytorch/pytorch/aten/src/ATen/Context.cpp:848.)
+  sparse_onehot = torch.sparse_coo_tensor(torch.stack((zz, xxyy)).long(), (torch.ones_like(xxyy).float()),
+/home/ronaldo/.cache/uv/archive-v0/OReC1j3VdMW1HGI8RjN3A/lib/python3.13/site-packages/instanseg/utils/pytorch_utils.py:312: UserWarning: Sparse CSR tensor support is in beta state. If you miss a functionality in the sparse tensor support, please submit a feature request to https://github.com/pytorch/pytorch/issues. (Triggered internally at /__w/pytorch/pytorch/aten/src/ATen/SparseCsrTensorImpl.cpp:49.)
+  intersection = torch.sparse.mm(onehot1, onehot2.T).to_dense()
+output (2, 1024, 1280) 0 920 seconds 9.705329056130722 GPU 198381056

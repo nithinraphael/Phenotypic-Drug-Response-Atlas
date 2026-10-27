@@ -1,0 +1,92 @@
+{
+  "status": "passed",
+  "analysis_manifest_sha256": "9edb8da502148f473950473344fc8bd196b41b666f3e890084fe056125908884",
+  "cells": 1695,
+  "sampled_fields": 15,
+  "fields_with_retained_cells": 15,
+  "unique_wells": 15,
+  "raw_crops_compared": 45,
+  "fragmented_retained_masks": 87,
+  "embedding_dimensions": 384,
+  "coordinate_dimensions": 2,
+  "norm_tolerance": 1e-05,
+  "population_recalculation_tolerance": 1e-06,
+  "segmentation_accuracy": "Not estimable: no matched manual reference masks",
+  "field_results": [
+    {
+      "image_field_id": "Week1_22123/Week1_150607_B02_s1_w107447158-AC76-4844-8431-E6A954BD1174.tif",
+      "objects": 224,
+      "retained": 164
+    },
+    {
+      "image_field_id": "Week1_22123/Week1_150607_B05_s1_w140A399EE-D913-46D2-A665-4ECCDE7630BE.tif",
+      "objects": 125,
+      "retained": 98
+    },
+    {
+      "image_field_id": "Week1_22123/Week1_150607_C03_s1_w1EA244626-2D0F-4DAA-A453-A3BE70D963FE.tif",
+      "objects": 131,
+      "retained": 81
+    },
+    {
+      "image_field_id": "Week1_22123/Week1_150607_B09_s1_w1B972836D-054B-4581-A177-4B2EB408C339.tif",
+      "objects": 229,
+      "retained": 152
+    },
+    {
+      "image_field_id": "Week1_22123/Week1_150607_B10_s1_w1258CECBC-20F3-4929-986F-107B6E6D7580.tif",
+      "objects": 174,
+      "retained": 116
+    },
+    {
+      "image_field_id": "Week1_22123/Week1_150607_B07_s1_w1AA2DD849-2719-41FE-85C8-C7B49A84841B.tif",
+      "objects": 135,
+      "retained": 77
+    },
+    {
+      "image_field_id": "Week1_22123/Week1_150607_B03_s1_w114129FBE-AB04-4F79-B8AF-CFA7D5524D53.tif",
+      "objects": 94,
+      "retained": 81
+    },
+    {
+      "image_field_id": "Week1_22123/Week1_150607_B06_s1_w1D5CB4DF8-B908-4AD5-976A-37F3F20D7F7D.tif",
+      "objects": 243,
+      "retained": 171
+    },
+    {
+      "image_field_id": "Week1_22123/Week1_150607_C02_s1_w13355670E-7C0E-404D-9EB5-61864343DF0B.tif",
+      "objects": 238,
+      "retained": 166
+    },
+    {
+      "image_field_id": "Week1_22123/Week1_150607_B04_s1_w11323931B-BDA7-4F42-870E-7174BFBF3643.tif",
+      "objects": 86,
+      "retained": 60
+    },
+    {
+      "image_field_id": "Week1_22123/Week1_150607_C06_s1_w10E977263-BE9D-4ED2-9931-82291834B1B3.tif",
+      "objects": 185,
+      "retained": 119
+    },
+    {
+      "image_field_id": "Week1_22123/Week1_150607_B11_s1_w1AF4E7ECE-5E16-4738-AB19-DE26D79D3A20.tif",
+      "objects": 48,
+      "retained": 35
+    },
+    {
+      "image_field_id": "Week1_22123/Week1_150607_C04_s1_w19CFF22AC-A4CE-46E9-94CD-D1A4EF0056EB.tif",
+      "objects": 131,
+      "retained": 87
+    },
+    {
+      "image_field_id": "Week1_22123/Week1_150607_C05_s1_w1D2ADFAB7-68C1-4133-88A4-680C00D053F1.tif",
+      "objects": 160,
+      "retained": 114
+    },
+    {
+      "image_field_id": "Week1_22123/Week1_150607_B08_s1_w1644ACA22-0360-400C-808C-98FDEBFDABD3.tif",
+      "objects": 242,
+      "retained": 174
+    }
+  ]
+}

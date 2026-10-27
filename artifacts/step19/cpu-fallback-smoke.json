@@ -1,0 +1,14 @@
+{
+  "device": "cpu",
+  "source_image": "Week1_22123/Week1_150607_B02_s1_w107447158-AC76-4844-8431-E6A954BD1174.tif",
+  "source_roi_yxyx": [
+    200,
+    200,
+    456,
+    456
+  ],
+  "cell_objects": 20,
+  "nuclear_objects": 23,
+  "seconds": 48.80257999780588,
+  "peak_rss_bytes": 3306061824
+}

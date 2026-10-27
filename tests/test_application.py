@@ -30,6 +30,18 @@ class ApplicationTests(unittest.TestCase):
         self.assertIsNotNone(d['map_plot'])
         self.assertTrue(d['tab_prediction'].is_error())
 
+    def test_cell_atlas_uses_verified_cells_and_preserves_image_analysis(self):
+        d=self.definitions
+        self.assertTrue(d['cell_atlas'].is_ok())
+        atlas=d['cell_atlas'].ok
+        self.assertEqual(atlas['cells'].height,atlas['manifest']['cells'])
+        self.assertTrue(set(atlas['cells']['image_field_id']).issubset(set(d['image_metadata'].ok['image_field_id'])))
+        self.assertTrue(atlas['cells']['eligible'].all())
+        self.assertFalse(atlas['cells']['border'].any())
+        for name in ['cell_plot','cell_area_plot','cell_change_plot','cell_well_table']:
+            self.assertIsNotNone(d[name])
+        self.assertIn('Image-field analysis',d['imaging_view'].text)
+
     def test_compound_change_rebuilds_dependent_selection(self):
         d=self.definitions
         rows=d['compound_rows']

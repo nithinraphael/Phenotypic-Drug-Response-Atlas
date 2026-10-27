@@ -1,0 +1,23 @@
+{
+  "status": "passed",
+  "source_hashes": {
+    "notebook.py": "d3cce0d5b98353ccb71f54ad2c354bb91c744e4d48d6ce82f0ddfd0f79f6a031",
+    "single_cells.py": "dffe2033562ce543b9389dc329a72c90bbcd7e7c28a1f9cb0a8054f50ff2609e",
+    "single_cell_ui.py": "574e3f36e34cf0acc2175e4005a4eb6329062bf738371d01a878dd355b0b07ee",
+    "config/single_cells.json": "9a8da3c7741d1f3c8cb0bb749adec54684f07d6249422de1d1ed4c92532ccec9",
+    "config/segmentation-requirements.txt": "65330756fc72f9decf0ad362c4ccdb4354bf4e3cf9c0810c6cc5e7c04d3dc911",
+    "tests/test_single_cells.py": "85790013977d93d892c05a573d563f3ee979bf627f51741fdb81ddce917b57ec",
+    "tests/test_application.py": "716ac23476f9da733a6bf9fed6b9a9a6e2e4ad8e0250574fcee78b20c3aab7f3",
+    "tests/validate_cell_atlas.py": "e507760841986793f0cf9df60afffdd13388a125e2510fa3cbd55fbe05aef641",
+    "tests/browser_step19.py": "891e4d41610423a6f5e4f784e4a2af44ebe7a413cd596d4e11691a2cbcc74914"
+  },
+  "atlas_manifest_sha256": "e905e3a48971962671b7263b65db8a79eeb09f8de85efc47a104e557febcdc8c",
+  "tests": {
+    "passed": 83,
+    "failed": 0,
+    "skipped": 0
+  },
+  "desktop_interaction_groups": 12,
+  "mobile": "Excluded by user",
+  "independent_design_review": "Not executed: agent usage limit"
+}

@@ -1,0 +1,12 @@
+PASS Four tabs and retained PRISM view
+PASS Actual cell counts, unique IDs, QC exclusions and provenance export
+PASS Native UMAP mouse click synchronizes compound, dose, field and highlighted cell
+PASS Downloaded crop preserves original uint16 channels; mask area and coordinates reconcile
+PASS Searchable individual-cell selector updates overlay and UMAP marker
+PASS All four cell-color controls and desktop map geometry
+PASS Dose distributions, descriptive profile differences and well-level export
+PASS Dose selector updates the matching cell population
+PASS Unanalyzed field clears stale cell output; original microscopy and image-level map remain available
+PASS Tab persistence and strict PRISM/BBBC021 separation
+PASS Cell navigation leaves masks, crops and embeddings unchanged
+PASS Desktop rendering and no browser JavaScript errors

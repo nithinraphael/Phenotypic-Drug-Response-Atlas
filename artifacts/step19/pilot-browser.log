@@ -1,0 +1,12 @@
+Installed 6 packages in 17ms
+PASS Four tabs and retained PRISM view
+PASS Actual cell counts, unique IDs, QC exclusions and provenance export
+PASS Native UMAP mouse click synchronizes compound, dose, field and highlighted cell
+PASS Downloaded crop preserves original uint16 channels; mask area and coordinates reconcile
+PASS Searchable individual-cell selector updates overlay and UMAP marker
+PASS All four cell-color controls and desktop map geometry
+PASS Dose distributions, descriptive profile differences and well-level export
+Traceback (most recent call last):
+  File "/home/ronaldo/Files/Projects/PhD/btp/tests/browser_step19.py", line 122, in <module>
+    next_dose=next(option.get_attribute('value') for option in dose.locator('option').all() if option.get_attribute('value')!=dose.input_value())
+StopIteration
