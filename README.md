@@ -12,11 +12,7 @@ PRISM measurements feed screening, Hill fits and TabPFN predictions. BBBC021 ima
 
 [Architecture source](assets/readme/architecture.mmd) · [SVG](assets/readme/architecture.svg) · [HTML](assets/readme/architecture.html)
 
-![PRISM screening overview](assets/readme/discoveries.png)
-
-<video controls preload="metadata" src="assets/readme/walkthrough.mp4" style="width:100%;height:auto"></video>
-
-[Watch or download the walkthrough (MP4, 43 seconds)](assets/readme/walkthrough.mp4)
+![PRISM screening overview](assets/readme/shots-20261027/discoveries.png)
 
 ## Features
 
@@ -28,31 +24,27 @@ Rank PRISM source fits by absolute Hill slope × R². Inspect the top 100 candid
 
 Select a compound, cell line and screen. Compare observations, Hill fits and TabPFN v2 predictions conditioned on that curve. Export measurements, predictions and figures.
 
-![Complete Drug Explorer with measurements, Hill fit, TabPFN prediction and controls](assets/readme/drug-explorer.png)
+![Complete Drug Explorer with measurements, Hill fit, TabPFN prediction and controls](assets/readme/shots-20261027/drug-explorer.png)
 
 ### Cell Explorer
 
 Explore linked cell and image-field UMAPs, microscopy overlays and dose comparisons. Cellpose-SAM predicts cell masks; InstanSeg supplies nuclear predictions; generic DINO supplies image features.
 
-![Complete cell UMAP with axes, condition highlighting and legend](assets/readme/cell-atlas.png)
+![Complete cell UMAP with axes, condition highlighting and legend](assets/readme/shots-20261027/cell-atlas.png)
 
-![Complete microscopy overlay, selected crop and segmentation checks](assets/readme/cell-microscopy.png)
+![Complete microscopy overlay, selected crop and segmentation checks](assets/readme/shots-20261027/cell-microscopy.png)
 
-![Dose distributions and adjacent-dose profile differences](assets/readme/dose-morphology.png)
+![Dose distributions and adjacent-dose profile differences](assets/readme/shots-20261027/dose-morphology.png)
 
-![Vehicle control and treated microscopy fields](assets/readme/microscopy-comparison.png)
+![Vehicle control and treated microscopy fields](assets/readme/shots-20261027/microscopy-comparison.png)
 
-![Complete image-field UMAP with dose centroids and legend](assets/readme/image-field-map.png)
+![Complete image-field UMAP with dose centroids and legend](assets/readme/shots-20261027/image-field-map.png)
 
 ### Validation
 
 Evaluate held-out concentrations, inspect failures, and review source records and methods. Quantitative GDSC2/CTRP comparisons remain unavailable.
 
-![Complete Validation view with benchmark, evidence status and reproducibility controls](assets/readme/validation.png)
-
-![External comparison status](assets/readme/external-evidence.png)
-
-[Capture provenance](assets/readme/README.md).
+![Held-out concentration benchmark and evaluation scope](assets/readme/shots-20261027/validation.png)
 
 ## Run locally
 
